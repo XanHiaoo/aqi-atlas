@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aqirec"
+version = "1.0.0"
+description = "AQI.in 城市空气质量日历、实时 AQI 与同日差异对比"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+aqirec = "aqirec.cli:main"
+
+[tool.setuptools.package-data]
+aqirec = ["templates/*.html", "templates/*.css", "templates/*.js"]
+
+[tool.setuptools.packages.find]
+include = ["aqirec*"]

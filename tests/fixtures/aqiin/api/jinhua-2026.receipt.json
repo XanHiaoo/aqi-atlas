@@ -1,0 +1,13 @@
+{
+  "request_url": "https://apiserver.aqi.in/aqi/v2/getAqiCalender?slug=china%2Fzhejiang%2Fjinhua&slugType=cityId&sensorname=aqi&year=2026&source=web",
+  "source_url": "https://www.aqi.in/dashboard/china/zhejiang/jinhua/historical-analysis",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T10:32:20+08:00",
+  "sha256": "36badf4e2332473edd7f47423a15771948c511d6da67633e213a468194c1e92c",
+  "standard": "AQI-US",
+  "sensorname": "aqi",
+  "period": "daily",
+  "year": 2026,
+  "city": "jinhua",
+  "rows": 292
+}

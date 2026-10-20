@@ -1,0 +1,26 @@
+# Local data, provider client configuration and generated reports
+/data/
+/output/
+/logs/
+/.runtime/
+/.venv/
+
+# Python build and test artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+/.pytest_cache/
+/.coverage
+/htmlcov/
+/build/
+/dist/
+*.tmp
+
+# Local editor settings and credentials
+/.idea/
+/.vscode/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

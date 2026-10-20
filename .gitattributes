@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+# Preserve captured response bytes for SHA-256 verification.
+tests/fixtures/aqiin/api/*.json -text
+tests/fixtures/aqiin/api/*.receipt.json text eol=lf

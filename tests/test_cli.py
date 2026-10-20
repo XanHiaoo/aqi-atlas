@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +23,20 @@ class CliTests(unittest.TestCase):
             refresh.assert_not_called()
             self.assertTrue((root / "site/index.html").exists())
             self.assertTrue((root / "site/compare.html").exists())
+            self.assertEqual(json.loads((root / "site/report.json").read_text(encoding="utf-8"))["cities"], [])
+
+    def test_first_start_with_refresh_has_no_cities_and_needs_no_client_or_network(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch("aqirec.aqiin_api.urlopen") as request, patch("aqirec.server.serve") as serve, contextlib.redirect_stdout(io.StringIO()):
+                result = main(["--snapshots", str(root / "snapshots"), "--cities-file", str(root / "cities.json"),
+                               "--aqiin-page", str(root / "missing-client.html"), "--output", str(root / "site"),
+                               "--refresh", "--serve"])
+            self.assertEqual(result, 0)
+            request.assert_not_called()
+            serve.assert_called_once()
+            self.assertEqual(json.loads((root / "site/report.json").read_text(encoding="utf-8"))["cities"], [])
+            self.assertFalse((root / "cities.json").exists())
 
     def test_serve_uses_current_paths_and_preserves_explicit_date_ranges(self):
         with tempfile.TemporaryDirectory() as directory:

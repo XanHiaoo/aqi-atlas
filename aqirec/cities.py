@@ -83,12 +83,10 @@ def city_from_location(row: dict) -> City:
 
 
 def load_cities(file: Path) -> tuple[City, ...]:
-    cities = list(CITIES)
+    cities = []
     if file.exists():
         payload = json.loads(file.read_text(encoding="utf-8"))
-        if payload.get("version", 1) == 2:
-            cities = []
-        elif payload.get("version", 1) != 1:
+        if payload.get("version", 1) not in (1, 2):
             raise ValueError("城市记录版本无效。")
         for row in payload["cities"]:
             city = City(**row)

@@ -75,13 +75,14 @@ class DashboardUpdateTests(unittest.TestCase):
         self.snapshots = self.root / "snapshots"
         shutil.copytree(ROOT / "tests/fixtures/aqiin", self.snapshots)
         self.output = self.root / "output"
-        write_report(build_history_report(date(2025, 10, 19), date(2026, 10, 19), self.snapshots), self.output)
+        save_cities(self.root / "cities.json", CITIES)
+        write_report(build_history_report(date(2025, 10, 19), date(2026, 10, 19), self.snapshots, selected_cities=CITIES), self.output)
         self.dashboard = Dashboard(self.output, self.snapshots, ROOT / "tests/fixtures/client.html", self.root / "cities.json")
 
     def tearDown(self):
         self.temporary.cleanup()
 
-    def test_default_cities_can_be_deleted_empty_stays_empty_and_readding_works(self):
+    def test_saved_cities_can_be_deleted_empty_stays_empty_and_readding_works(self):
         self.dashboard.select(["hangzhou", "sanya", "beijing"])
         self.dashboard.delete("hangzhou")
         self.assertNotIn("hangzhou", [city.key for city in load_cities(self.dashboard.registry)])
@@ -99,11 +100,14 @@ class DashboardUpdateTests(unittest.TestCase):
         # Deleting is reversible and never removes original source files.
         self.assertTrue((self.snapshots / "api/hangzhou-2026.json").exists())
 
-    def test_version_one_registry_migrates_without_restoring_removed_defaults(self):
+    def test_version_one_registry_contains_only_explicitly_saved_cities(self):
         registry = self.dashboard.registry
         registry.write_text(json.dumps({"version": 1, "cities": []}), encoding="utf-8")
-        self.assertEqual(load_cities(registry), CITIES)
+        self.assertEqual(load_cities(registry), ())
         save_cities(registry, CITIES[1:])
+        payload = json.loads(registry.read_text(encoding="utf-8"))
+        payload["version"] = 1
+        registry.write_text(json.dumps(payload), encoding="utf-8")
         self.assertEqual(load_cities(registry), CITIES[1:])
 
     def test_refresh_rolls_dates_but_fetches_only_selected_cities_and_recent_year(self):

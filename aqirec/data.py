@@ -31,6 +31,7 @@ class City:
     country: str = "China"
 
 
+# Stable metadata/keys for existing saved cities, not an initial selection.
 CITIES = (
     City("hangzhou", "杭州", "HANGZHOU", "浙江", 30.2741, 120.1551),
     City("jinhua", "金华", "JINHUA", "浙江", 29.0792, 119.6474),

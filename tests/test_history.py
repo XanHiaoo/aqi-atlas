@@ -13,7 +13,7 @@ FIXTURES = Path(__file__).parent / "fixtures" / "aqiin"
 
 class HistoryTests(unittest.TestCase):
     def test_months_remain_separate_across_years_and_use_only_in_range_dates(self):
-        report = build_history_report(date(2025, 10, 20), date(2026, 10, 19), FIXTURES)
+        report = build_history_report(date(2025, 10, 20), date(2026, 10, 19), FIXTURES, selected_cities=CITIES)
         self.assertEqual(report["provider"], "AQI.in")
         self.assertEqual(report["expected_days"], 365)
         city = report["cities"][0]
@@ -28,7 +28,7 @@ class HistoryTests(unittest.TestCase):
             build_history_report(date(2026, 1, 1), date(2026, 1, 2), Path(directory), selected_cities=CITIES[:1])
 
     def test_policy_and_both_pages_use_only_current_data_and_provider(self):
-        report = build_history_report(date(2025, 10, 20), date(2026, 10, 19), FIXTURES)
+        report = build_history_report(date(2025, 10, 20), date(2026, 10, 19), FIXTURES, selected_cities=CITIES)
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             write_report(report, output)

@@ -6,13 +6,13 @@ from datetime import date, datetime
 from pathlib import Path
 
 from .aqiin_api import city_slug, load_api_snapshots
-from .data import CATEGORIES, CITIES, SHANGHAI, date_range, summarize
+from .data import CATEGORIES, SHANGHAI, date_range, summarize
 
 
-def build_history_report(start: date, end: date, snapshots: Path, *, selected_cities=None):
+def build_history_report(start: date, end: date, snapshots: Path, *, selected_cities=()):
     now = datetime.now(SHANGHAI)
     cities = []
-    for city in (selected_cities if selected_cities is not None else CITIES):
+    for city in selected_cities:
         values, receipts = load_api_snapshots(city, snapshots, now.date())
         if not receipts:
             raise ValueError(f"没有 {city.name} 的日历快照，请先使用 --refresh 获取历史日值。")

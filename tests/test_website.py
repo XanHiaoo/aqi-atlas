@@ -6,7 +6,8 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
-from aqirec.cities import city_from_location
+from aqirec.cities import city_from_location, save_cities
+from aqirec.data import CITIES
 from aqirec.comparison import comparison_metadata, paired_days
 from aqirec.history import build_history_report
 from aqirec.report import write_report
@@ -31,7 +32,7 @@ class WebsiteTests(unittest.TestCase):
         self.assertEqual(limits["absolute_limit"], 100)
 
     def test_two_pages_embed_identical_data_and_work_as_offline_neighbors(self):
-        report = build_history_report(date(2025, 10, 20), date(2026, 10, 20), ROOT / "tests/fixtures/aqiin")
+        report = build_history_report(date(2025, 10, 20), date(2026, 10, 20), ROOT / "tests/fixtures/aqiin", selected_cities=CITIES)
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             write_report(report, output)
@@ -48,10 +49,11 @@ class WebsiteTests(unittest.TestCase):
 
     def test_adding_city_rebuilds_both_pages_from_current_data(self):
         snapshots = ROOT / "tests/fixtures/aqiin"
-        report = build_history_report(date(2025, 10, 20), date(2026, 10, 20), snapshots)
+        report = build_history_report(date(2025, 10, 20), date(2026, 10, 20), snapshots, selected_cities=CITIES)
         city = city_from_location({"slug": "china/shanghai/shanghai", "searchType": "cityId", "city": "Shanghai", "state": "Shanghai", "country": "China", "latitude": 31.2286, "longitude": 121.475})
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            save_cities(root / "cities.json", CITIES)
             write_report(report, root)
             dashboard = Dashboard(root, snapshots, ROOT / "tests/fixtures/client.html", root / "cities.json")
             dashboard.results[city.slug] = city

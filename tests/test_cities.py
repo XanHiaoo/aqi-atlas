@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 from aqirec.aqiin_api import calendar_url, load_api_snapshots, refresh_calendars
 from aqirec.cities import city_from_location, load_cities, save_city, search_cities
-from aqirec.data import CITIES
 
 
 def location(slug="china/shanghai/shanghai", city="Shanghai", country="China"):
@@ -31,8 +30,12 @@ class CitySelectionTests(unittest.TestCase):
             save_city(file, city)
             save_city(file, city)
             cities = load_cities(file)
-            self.assertEqual(len(cities), len(CITIES) + 1)
+            self.assertEqual(len(cities), 1)
             self.assertEqual(cities[-1], city)
+
+    def test_missing_registry_has_no_initial_cities(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(load_cities(Path(directory) / "cities.json"), ())
 
     def test_stations_invalid_coordinates_and_unsafe_slugs_are_rejected(self):
         for row in ({**location(), "searchType": "stationId"},

@@ -15,7 +15,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .data import CITIES, SHANGHAI, City, valid_number
+from .data import SHANGHAI, City, valid_number
 
 REGIONS = {"hangzhou": "zhejiang", "jinhua": "zhejiang", "sanya": "hainan", "beijing": "beijing"}
 API_ENDPOINT = "https://apiserver.aqi.in/aqi/v2/getAqiCalender"
@@ -115,8 +115,10 @@ def published_client_token(html: str) -> str:
     return token
 
 
-def refresh_calendars(start: date, end: date, directory: Path, page: Path, *, cities=CITIES, years=None):
+def refresh_calendars(start: date, end: date, directory: Path, page: Path, *, cities=(), years=None):
     """Fetch and validate all requested years before replacing any local cache."""
+    if not cities:
+        return
     token = published_client_token(page.read_text(encoding="utf-8"))
 
     def fetch(task):

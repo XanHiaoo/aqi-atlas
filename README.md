@@ -1,4 +1,9 @@
-# AQIRec · 城市 AQI 年度概览
+# AQI Atlas · 城市 AQI 年度概览
+
+[![Tests](https://github.com/XanHiaoo/aqi-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/XanHiaoo/aqi-atlas/actions/workflows/ci.yml)
+[![Pages](https://github.com/XanHiaoo/aqi-atlas/actions/workflows/pages.yml/badge.svg)](https://github.com/XanHiaoo/aqi-atlas/actions/workflows/pages.yml)
+
+[在线查看](https://xanhiaoo.github.io/aqi-atlas/) · [GitHub Actions](https://github.com/XanHiaoo/aqi-atlas/actions)
 
 基于 AQI.in 美标日值的本地空气质量网站。支持城市与地区搜索、实时 AQI、过去一年的日历热力图，以及两城共同日期的差异对比。
 
@@ -48,12 +53,13 @@ Git 仓库只包含程序、页面和测试样本，不包含本机城市配置�
 
 | 页面 | 路径 | 内容 |
 | --- | --- | --- |
-| 城市日历 | `/` | 实时 AQI、城市勾选、日历热力图、日值累计分布和阈值占比 |
+| 城市日历 | `/` | 实时 AQI、城市勾选、日历热力图、城市 × 月份热力图、日值累计分布和阈值占比 |
 | 差异对比 | `/compare` | 两城共同日期的原值与差值、月均差距及累计分布 |
 
 - **搜索与管理**：支持常见中文名和英文名；城市可加入日历，地区可展开平台匹配的下辖城市。比如“东京”“东京都”“Tokyo”会区分显示地区与城市。地区级结果本身不作为城市日值参与统计。
 - **勾选与排序**：勾选决定展示和更新范围，选择会保存；城市右侧的 × 删除已保存的城市。取消勾选保留该城市配置。
-- **累计分布**：城市日历按各城自己的有效日值计算天数和占比；滑块或 ≤50、≤100 快捷按钮可查看阈值读数。
+- **累计分布**：城市日历按各城自己的有效日值计算天数和占比；滑块或 ≤50、≤100 快捷按钮可查看阈值读数。结果列表支持默认顺序、占比从高到低及从低到高排序，调整阈值后自动重排，并记住排序选择。
+- **城市 × 月份**：按勾选顺序对比月度 AQI 中位数或良好日（AQI≤50）占比。默认仅使用所选城市共同有效的日期，也可切换为各城自身有效日期；每格显示使用日数与区间内日数。跨年月份分列，首尾月仅统计当前区间内日期，缺失不补零。
 - **两城比较**：仅统计双方都有已发布日值、且非今日暂定的同一组日期。切换组合时使用共享色标。
 - **实时数据**：后台约每 5 分钟尝试刷新，页面每 30 秒读取。失败时保留并标记可用的旧值，跨日旧值不冒充今日实时值。
 - **每日更新**：北京时间 00:05 为已勾选城市尝试获取历史日值；平台未发布或请求失败时自动重试。服务恢复运行后会检查到期任务。
@@ -67,6 +73,44 @@ Git 仓库只包含程序、页面和测试样本，不包含本机城市配置�
 原始响应、来源 URL、获取时间及 SHA-256 保存在本地快照中。页面目录中的 `source-policy.md` 和 `report.json` 提供当前覆盖范围与来源摘要。
 
 来源：[AQI.in](https://www.aqi.in/cn/air-quality-map)。
+
+## GitHub Pages 与 Actions
+
+仓库：[`XanHiaoo/aqi-atlas`](https://github.com/XanHiaoo/aqi-atlas)。公开站点位于 <https://xanhiaoo.github.io/aqi-atlas/>。
+
+GitHub Pages 发布可交互的数据快照：城市勾选、排序、两城对比、月份热力图和累计分布在浏览器中运行。搜索范围为已发布城市，勾选只保存在当前浏览器；新增城市、地区联网搜索和实时查询由本地 Python 服务提供。公开页面的 AQI 数值标为快照，并显示数据更新时间。
+
+| Workflow | 触发方式 | 内容 |
+| --- | --- | --- |
+| `ci.yml` | 推送 main、Pull Request、手动 | Python 3.10/3.13 与 Windows 测试，验证静态构建 |
+| `pages.yml` | 推送 main、手动、数据更新后 | 测试通过后构建并发布到 GitHub Pages |
+| `refresh-data.yml` | 北京时间每日 00:17、06:17，或手动 | 获取并校验已发布城市的 AQI.in 数据，更新公共快照后重新发布 |
+
+定时任务可能因 GitHub 排队而延迟。获取失败或新响应导致已有有效日值丢失时，流程会失败并保留上次快照与网站。
+
+首次配置：
+
+1. 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
+2. 在 **Settings → Secrets and variables → Actions** 添加 `AQIIN_CLIENT_TOKEN`，值为本地 `data/aqiin/client.html` 所含的官网公开客户端配置。它只通过 Actions Secret 使用，不写入公共快照。配置失效后更新这个 Secret。
+3. 在 Actions 中运行 **Deploy GitHub Pages**；需要立即联网更新时运行 **Refresh published AQI data**。未配置 Secret 时，在线更新会跳过，现有快照仍可正常部署。
+
+在本地添加城市或更新数据后，可主动更新公开版本：
+
+```shell
+python -m aqirec.pages export
+git add site-data/snapshot.json
+git commit -m "data: update published AQI snapshot"
+git push
+```
+
+导出包含当前报告、默认勾选顺序与已获取的 AQI 快照。`site-data/snapshot.json` 会随仓库公开；原始缓存、`client.html`、更新日志与浏览器账户信息不进入发布目录。本地预览静态版本：
+
+```shell
+python -m aqirec.pages build
+python -m http.server 8080 --directory dist
+```
+
+构建只读取公共快照，保留快照的历史日期范围，避免把旧数据标成新数据。部署流程采用 GitHub 官方 [Pages Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)，第三方步骤均固定到提交 SHA，由 Dependabot 检查更新。
 
 ## 命令行
 
@@ -105,11 +149,14 @@ aqirec/
   report.py             HTML、JSON、CSV 输出
   server.py             本地 HTTP 服务
   cli.py                命令行入口
+  pages.py              公共数据导出、静态构建与定时更新
   templates/            当前界面模板与资源
 tests/
   fixtures/             独立的公开样本与虚拟客户端配置
 data/                   本机城市配置、公开客户端配置和快照
 output/                 当前生成页面与数据表
+site-data/              随仓库提交的公开数据快照
+.github/workflows/      测试、Pages 部署与定时数据更新
 logs/                   本地服务日志
 .runtime/               本机可选的 Python 运行环境
 run.ps1                 Windows 启动脚本

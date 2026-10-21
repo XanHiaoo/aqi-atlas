@@ -39,6 +39,22 @@ async function dragCity(page, from, to) {
       assert.equal(await page.locator('#cities .city').count(), selected.length);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       if (mobile) {
+        assert.deepEqual(await page.locator('.mobile-section-jumps a').allTextContents(), ['日历', '实时', '月历', '统计']);
+        assert.equal(await page.locator('html').getAttribute('data-mobile-city-view'), 'calendar');
+        assert(await page.locator('#selected-comparison').isHidden());
+        assert(await page.locator('#monthly-section').isHidden());
+        assert(await page.locator('#ecdf-section').isHidden());
+        assert(await page.locator('#mobile-realtime-strip').isVisible());
+        assert.deepEqual(await page.locator('.mobile-live-values > span').allTextContents(), await page.locator('#selected-values > span').allTextContents());
+        await page.locator('.mobile-section-jumps a[data-view="realtime"]').click();
+        assert(await page.locator('#selected-comparison').isVisible());
+        assert(await page.locator('#cities').isHidden());
+        assert(await page.locator('#mobile-realtime-strip').isHidden());
+        assert.equal(await page.locator('#selected-values > span:visible').count(), selected.length);
+        assert(await page.locator('#selected-values').evaluate(node => node.scrollWidth <= node.clientWidth));
+        await page.screenshot({ path: path.join(output, `realtime-${width}.png`) });
+        await page.goBack();
+        await page.waitForFunction(() => document.documentElement.dataset.mobileCityView === 'calendar');
         await page.screenshot({ path: path.join(output, `calendar-${width}.png`) });
         assert.equal(await page.locator('#city-picker').evaluate(n => n.parentElement.tagName), 'DIALOG');
         assert.equal(await page.locator('.site-navigation').evaluate(n => getComputedStyle(n).position), 'fixed');
@@ -119,6 +135,8 @@ async function dragCity(page, from, to) {
         await page.locator('.mobile-sheet-close').click();
         assert.equal(await page.locator('dialog').evaluate(n => n.open), false);
         await page.locator('.mobile-section-jumps a[href="#monthly-section"]').click();
+        assert(await page.locator('#cities').isHidden());
+        assert(await page.locator('#mobile-realtime-strip').isVisible());
         await page.locator('[data-month-metric="good-share"]').click();
         assert.equal(await page.locator('#month-matrix tbody tr').count(), selected.length);
         const monthly = page.locator('#mobile-month-matrix');
@@ -180,6 +198,8 @@ async function dragCity(page, from, to) {
           await page.locator('.mobile-sheet-close').click();
         }
         await page.locator('.mobile-section-jumps a[href="#ecdf-section"]').click();
+        assert(await page.locator('#monthly-section').isHidden());
+        assert(await page.locator('#mobile-realtime-strip').isVisible());
         await page.locator('#ecdf-legend button').first().click();
         assert.equal(await page.locator('#ecdf-legend [aria-pressed="true"]').count(), 1);
         await page.locator('#ecdf-sort').selectOption('share-desc');

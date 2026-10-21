@@ -203,6 +203,7 @@ function renderRealtime(){
     number.setAttribute("aria-label",city.name+(window.aqiSite.isStatic?"AQI 快照 ":"实时 AQI ")+number.textContent);item.append(number);
     panel.append(item);
   }
+  window.aqiMobile.realtime();
 }
 async function loadRealtime(){
   if(liveLoading||(!window.aqiSite.isStatic&&!["http:","https:"].includes(location.protocol)))return;

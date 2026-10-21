@@ -1,6 +1,6 @@
 /* An independent, touch-first layout. Desktop visuals remain in site.css. */
 .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
-.mobile-section-jumps, .mobile-month-matrix { display: none; }
+.mobile-section-jumps, .mobile-month-matrix, .mobile-realtime-strip { display: none; }
 .mobile-city-sheet:not([open]) { display: none; }
 .mobile-day-popover { display: none; }
 .city-drag-handle, .city-sort-ghost { display: none; }
@@ -35,6 +35,24 @@
   .mobile-section-jumps { display: flex; align-items: center; gap: 7px; margin: 0 0 18px; padding: 4px; border-radius: 12px; background: #e9eff6; order: 4; }
   .mobile-section-jumps a { display: flex; flex: 1; min-height: 42px; align-items: center; justify-content: center; text-decoration: none; border-radius: 9px; font-size: 13px; color: var(--muted); }
   .mobile-section-jumps a.is-active { color: var(--ink); background: #fff; }
+  .mobile-section-jumps { order: 2; gap: 3px; }
+  .mobile-realtime-strip { display: flex; order: 3; align-items: center; gap: 12px; min-height: 34px; margin: -5px 0 16px; padding: 5px 0; border-bottom: 1px solid #e0e8f0; font-size: 11px; }
+  .mobile-live-label { flex-shrink: 0; color: var(--muted); text-decoration: none; }
+  .mobile-live-values { display: flex; align-items: center; gap: 16px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .mobile-live-values::-webkit-scrollbar { display: none; }
+  .mobile-live-values > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--muted); }
+  .mobile-live-values strong { font-size: 13px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .mobile-live-values .has-aqi strong { color: color-mix(in srgb, var(--aqi-color) 65%, #193e54); }
+  html[data-mobile-city-view] #selected-comparison { order: 5; }
+  html[data-mobile-city-view=realtime] .selected-values { grid-template-columns: repeat(2,minmax(0,1fr)); grid-auto-flow: row; overflow: visible; }
+  html[data-mobile-city-view]:not([data-mobile-city-view=realtime]) #selected-comparison,
+  html[data-mobile-city-view=realtime] .mobile-realtime-strip,
+  html[data-mobile-city-view]:not([data-mobile-city-view=calendar]) #cities,
+  html[data-mobile-city-view]:not([data-mobile-city-view=calendar]) #legend,
+  html[data-mobile-city-view]:not([data-mobile-city-view=calendar]) #mobile-calendar-tools,
+  html[data-mobile-city-view]:not([data-mobile-city-view=calendar]) #calendar-hint,
+  html[data-mobile-city-view]:not([data-mobile-city-view=monthly]) #monthly-section,
+  html[data-mobile-city-view]:not([data-mobile-city-view=stats]) #ecdf-section { display: none; }
   .legend { gap: 9px 13px; margin: 0 0 17px; font-size: 10px; }
   .legend .swatch.gradient { width: 24px; height: 8px; }
   .city { --mobile-city-day: clamp(4px, calc((100svh - 530px) / 30), 8px); padding: 10px; margin-bottom: 12px; border-radius: 16px; border-color: #e2e9f0; box-shadow: none; }
@@ -219,7 +237,9 @@
 }
 @media print {
   .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
-  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix, .mobile-day-popover { display: none !important; }
+  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix, .mobile-day-popover, .mobile-realtime-strip { display: none !important; }
+  html[data-mobile-city-view] #cities, html[data-mobile-city-view] #monthly-section, html[data-mobile-city-view] #ecdf-section { display: block; }
+  html[data-mobile-city-view] #selected-comparison, html[data-mobile-city-view] #legend { display: flex; }
   .calendar-wrap, #delta-calendar > .calendar { display: block !important; }
   .month-matrix-scroll, #month-matrix-detail { display: block !important; }
   .date-detail { display: flex !important; }

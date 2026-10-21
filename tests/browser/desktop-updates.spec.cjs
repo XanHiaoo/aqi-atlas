@@ -19,6 +19,16 @@ const root=path.resolve(__dirname,'../..'),base='http://aqi.test/aqi-atlas/';
    assert.deepEqual(await page.locator('#ecdf-results .ecdf-result-name').allTextContents(),names);
   }
   await verifyCharts();
+  await page.locator('[data-month-metric="good-share"]').click();
+  assert(await page.evaluate(()=>{
+   const report=JSON.parse(document.querySelector('#report-data').textContent),selected=[...document.querySelectorAll('#city-options input:checked')].map(n=>n.value),cities=report.cities.filter(city=>selected.includes(city.key));
+   const maps=cities.map(city=>new Map(city.days.filter(day=>!day.provisional&&Number.isFinite(day.mean)&&day.mean>=0).map(day=>[day.date,day.mean])));
+   return [...document.querySelectorAll('#month-matrix .month-matrix-cell')].every(cell=>{
+    const city=report.cities.find(city=>city.key===cell.dataset.city),days=city.days.filter(day=>day.date.startsWith(cell.dataset.month)&&day.date>=report.start_date&&day.date<=report.end_date&&maps.every(map=>map.has(day.date))),good=days.filter(day=>day.mean<=50).length;
+    return cell.querySelector('small').textContent===`${good} / ${days.length} 天`;
+   });
+  }), 'Good-share cells show good days divided by the actual valid sample, including common-day exclusions');
+  await page.locator('[data-month-metric="median"]').click();
   const last=expected.pop();expected.unshift(last);
   await chips.last().locator('.desktop-sort-handle').dragTo(chips.first());assert.deepEqual(await order(),expected);assert.deepEqual(await checked(),states);await verifyCharts();
   await page.reload();await page.waitForSelector('#cities .city');assert.deepEqual(await order(),expected);await verifyCharts();

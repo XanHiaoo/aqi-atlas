@@ -50,7 +50,7 @@
   }
   function showMonthPopover(button,detail){
     ensureMonthPopover();if(monthAnchor===button&&monthPopover.matches(":popover-open")){closeMonthPopover();return;}closeMonthPopover();
-    const parts=detail.split(" · "),copy=monthPopover.querySelector(".mobile-month-popover-copy");copy.replaceChildren();copy.append(make("strong","mobile-month-popover-title",parts.splice(0,2).join(" · ")));parts.forEach((part,index)=>copy.append(make("span",index===0?"mobile-month-popover-value":"",part)));
+    const parts=detail.split(" · "),copy=monthPopover.querySelector(".mobile-month-popover-copy");copy.replaceChildren();copy.append(make("strong","mobile-month-popover-title",parts.splice(0,2).join(" · ")),make("span","mobile-month-popover-value",parts[0].replace(/（[^）]*）$/,"")));
     monthAnchor=button;button.classList.add("is-selected");button.setAttribute("aria-expanded","true");monthPopover.showPopover();
     const rect=button.getBoundingClientRect(),top=document.querySelector(".site-header").getBoundingClientRect().bottom+8,bottom=innerHeight-document.querySelector(".site-navigation").offsetHeight-8;
     monthPopover.style.maxHeight=Math.max(100,bottom-top)+"px";

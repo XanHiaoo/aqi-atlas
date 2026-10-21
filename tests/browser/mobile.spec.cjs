@@ -119,7 +119,7 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         await monthlyCell.click();
         const popover = page.locator('#mobile-month-popover');
         assert(await popover.isVisible());
-        assert.equal((await popover.locator('.mobile-month-popover-copy > *').allTextContents()).join(' · '), await monthlyCell.getAttribute('title'));
+        assert.equal((await popover.locator('.mobile-month-popover-copy > *').allTextContents()).join(' · '), (await monthlyCell.getAttribute('title')).split(' · ').slice(0, 3).join(' · ').replace(/（[^）]*）$/, ''));
         assert.equal(await monthly.evaluate(node => node.offsetHeight), matrixHeight, 'Details float without moving table rows');
         const popupBounds = await popover.boundingBox(), headerBounds = await page.locator('.site-header').boundingBox(), navBounds = await page.locator('.site-navigation').boundingBox();
         assert(popupBounds.x >= 0 && popupBounds.x + popupBounds.width <= width);

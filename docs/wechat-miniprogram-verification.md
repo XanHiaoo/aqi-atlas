@@ -25,7 +25,7 @@
 node --test miniprogram/tests/core.test.cjs miniprogram/tests/pages.test.cjs
 ```
 
-当前 21 项通过；另有独立编译器、编译模板布局、配色参考检查。
+当前 22 项通过；另有独立编译器、编译模板布局、配色参考检查。
 
 ## 尚未完成，不能作为已验证发布版
 

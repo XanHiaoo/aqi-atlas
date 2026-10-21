@@ -321,7 +321,7 @@ function drawMonthMatrix(){
     cells.forEach((cell,monthIndex)=>{
       const td=document.createElement("td"),button=document.createElement("button");button.type="button";button.className="month-matrix-cell";button.dataset.city=city.key;button.dataset.month=cell.month;button.dataset.cityIndex=cityIndex;button.dataset.monthIndex=monthIndex;
       const value=monthMetric==="median"?cell.median:cell.share,number=document.createElement("strong"),count=document.createElement("small");
-      number.textContent=value===null?"—":monthMetric==="median"?fmt(value):(value*100).toFixed(1)+"%";count.textContent=`${cell.valid} / ${cell.expected} 天`;
+      number.textContent=value===null?"—":monthMetric==="median"?fmt(value):(value*100).toFixed(1)+"%";count.textContent=monthMetric==="good-share"?`${cell.goodDays} / ${cell.valid} 天`:`${cell.valid} / ${cell.expected} 天`;count.hidden=monthMetric==="median";
       if(value!==null){const fill=monthMetric==="median"?dayFill(value):`color-mix(in oklab, #2373ad ${value*100}%, #edf5fd)`;button.style.background=fill;button.style.color=monthCellTextColor(fill);
       }else button.classList.add("is-missing");
       const label=value===null?"暂无有效日值":monthMetric==="median"?`月度 AQI 中位数 ${number.textContent}`:`良好日占比 ${number.textContent}（${cell.goodDays} / ${cell.valid} 个有效日）`;

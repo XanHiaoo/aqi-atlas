@@ -258,7 +258,7 @@ async function dragCity(page, from, to) {
         assert.equal(await page.locator('#city-picker').evaluate(n => n.parentElement.tagName), 'MAIN');
         assert(await page.locator('.mobile-calendar').first().isHidden());
         assert(await page.locator('.calendar-wrap').first().isVisible());
-        assert(await page.locator('.month-matrix-options').isVisible());
+        assert(await page.locator('.month-matrix-options').isHidden());
       }
       await page.locator('[data-site-page="compare"]').click();
       await page.waitForSelector('#mean-delta');

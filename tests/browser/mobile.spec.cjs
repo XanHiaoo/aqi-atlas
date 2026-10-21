@@ -12,7 +12,7 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
   fs.mkdirSync(output, { recursive: true });
   const browser = await chromium.launch({ headless: true, ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}) });
   try {
-    for (const [width, height] of [[320, 740], [360, 800], [390, 844], [430, 932], [844, 390], [1440, 1000]]) {
+    for (const [width, height] of [[320, 740], [360, 640], [360, 800], [390, 844], [430, 932], [844, 390], [1440, 1000]]) {
       const mobile = width < 1000;
       const context = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile, timezoneId: 'Asia/Shanghai' });
       const requests = [], errors = [];
@@ -63,6 +63,13 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         assert.equal(await page.locator('.mobile-mini-day.is-selected').count(), selected.length);
         const value = city.days.find(d => d.date === annualDate)?.mean;
         assert((await annual.locator('.mobile-day-detail').innerText()).includes(value == null ? '数据缺失' : value.toFixed(1)));
+        const citySizes = await page.locator('#cities .city').evaluateAll(cities => {
+          const budget = innerHeight - document.querySelector('.site-header').offsetHeight - document.querySelector('.site-navigation').offsetHeight - 20;
+          return cities.map(city => ({ name: city.querySelector('h2').textContent, height: city.getBoundingClientRect().height, budget }));
+        });
+        assert(citySizes.every(city => city.height <= city.budget), 'Every complete city card fits one phone screen: ' + JSON.stringify(citySizes));
+        await firstCity.evaluate(n => scrollTo(0, n.getBoundingClientRect().top + scrollY - document.querySelector('.site-header').offsetHeight - 8));
+        await page.screenshot({ path: path.join(output, `city-screen-${width}-${height}.png`) });
         await annualDay.press('ArrowRight');
         const nextDate = new Date(Date.parse(annualDate) + 86400000).toISOString().slice(0, 10);
         assert.equal(await annual.locator('.mobile-mini-day.is-selected').getAttribute('data-mobile-date'), nextDate);
@@ -137,7 +144,7 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       assert.equal(requests.filter(url => url.includes('/api/')).length, 0);
       assert.equal(errors.length, 0, errors.join('\n'));
-      console.log(`PASS ${width}x${height}: ${mobile ? 'one-screen annual calendar, day selection, data/color equality, city sheet, charts and navigation' : 'desktop layout and navigation'}`);
+      console.log(`PASS ${width}x${height}: ${mobile ? 'complete city card in one screen, day selection, data/color equality, city sheet, charts and navigation' : 'desktop layout and navigation'}`);
       await context.close();
     }
   } finally { await browser.close(); }

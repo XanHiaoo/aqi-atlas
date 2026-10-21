@@ -1,0 +1,6 @@
+#city-subtitle { display: none; }
+.desktop-sort-handle { flex-shrink: 0; width: 24px; min-height: 30px; margin: 0 2px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: #7891a7; cursor: grab; font-size: 21px; line-height: 1; }
+.desktop-sort-handle:active { cursor: grabbing; }
+.desktop-sort-handle:hover { color: #276b9c; background: #edf5fd; }
+.desktop-sort-handle:focus-visible, .city-option.sort-target { outline: 2px solid #2779ad; outline-offset: 2px; }
+@media print { .desktop-sort-handle { display: none; } }

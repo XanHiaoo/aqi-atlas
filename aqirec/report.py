@@ -18,6 +18,8 @@ def render_page(template: str, inline: str, year_label: str, page: str, *, deskt
     styles = (directory / (prefix + "site.css")).read_text(encoding="utf-8")
     script = (directory / (prefix + "site.js")).read_text(encoding="utf-8")
     if desktop:
+        styles += "\n" + (directory / "desktop-enhancements.css").read_text(encoding="utf-8")
+        script += "\n" + (directory / "desktop-sort.js").read_text(encoding="utf-8")
         navigation = navigation.replace('href="index.html"', 'href="desktop-index.html"').replace('href="compare.html"', 'href="desktop-compare.html"')
         script = script.replace('online?"/":"index.html"', '"desktop-index.html"').replace('online?"/compare":"compare.html"', '"desktop-compare.html"')
         template = template.replace('content="width=device-width, initial-scale=1"', 'content="width=1200"')

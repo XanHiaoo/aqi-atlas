@@ -34,5 +34,4 @@ module.exports=mode=>({
  sortShares(event){this.ui.sort=["default","desc","asc"][Number(event.detail.value)];this.paint();},
  pickA(event){const s=this.store.snapshot(),key=s.available[Number(event.detail.value)].key;if(key===this.data.view.bKey){this.ui.b=this.data.view.aKey;}this.ui.a=key;this.paint();},pickB(event){const s=this.store.snapshot(),key=s.available[Number(event.detail.value)].key;if(key===this.data.view.aKey)this.ui.a=this.data.view.bKey;this.ui.b=key;this.paint();},swap(){this.ui.a=this.data.view.bKey;this.ui.b=this.data.view.aKey;this.paint();},
  toggleNotes(){this.ui.notes=!this.ui.notes;this.paint();},goRealtime(){wx.switchTab({url:"/pages/realtime/index"});},
- async exportData(){const text=await this.store.export(),file=wx.env.USER_DATA_PATH+"/aqi-selected.csv";wx.getFileSystemManager().writeFile({filePath:file,data:text,encoding:"utf8",success:()=>wx.shareFileMessage({filePath:file,fileName:"AQI-US-所选城市.csv",fail:()=>wx.showToast({title:"文件已生成，可在支持文件分享的微信版本中分享",icon:"none"})}),fail:()=>wx.showToast({title:"导出失败，请检查存储空间",icon:"none"})});}
 });

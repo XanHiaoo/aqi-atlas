@@ -25,7 +25,6 @@ function createStore(storage,client,now=()=>Date.now()){
     const old=live.find(row=>row.key===city.key);if(force||!old||old.status!=="ok"||now()-Date.parse(old.fetched_at)>=config.realtimeTtl){if(!force&&liveDue[city.key]&&now()-liveDue[city.key]<60000)continue;liveDue[city.key]=now();try{const row=await client.realtime(city);live=live.filter(v=>v.key!==city.key).concat(row);changed=true;}catch(e){if(old)old.status="stale";failures.push(city.name+"实时更新失败："+e.message);}}
    }error=failures.join("；");
    }catch(e){error=e.message;}finally{if(changed)persist();write("live",live);busy=false;emit();}},
-  async export(){const s=store.snapshot(),quote=v=>'"'+String(v).replace(/"/g,'""')+'"',lines=[["城市","日期","AQI(US)","标准","数据源"]];s.cities.forEach(c=>c.days.filter(d=>d.date>=s.report.start_date&&d.date<=s.report.end_date).forEach(d=>lines.push([c.name,d.date,M.valid(d.mean)?d.mean:"","AQI-US","AQI.in"])));return "\ufeff"+lines.map(row=>row.map(quote).join(",")).join("\r\n");}
  };
  return store;
 }

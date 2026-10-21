@@ -7,9 +7,16 @@ module.exports=mode=>({
  onShow(){if(this.getTabBar&&this.getTabBar())this.getTabBar().setData({selected:modes.indexOf(mode)});if(this.store){this.paint();this.store.refresh();}clearInterval(this.timer);this.timer=setInterval(()=>this.store.refresh(),60000);},
  onHide(){clearInterval(this.timer);},onUnload(){this.destroyed=true;this.searchVersion=(this.searchVersion||0)+1;clearInterval(this.timer);clearTimeout(this.searchTimer);if(this.unsubscribe)this.unsubscribe();},
  onPullDownRefresh(){this.store.refresh(true).finally(()=>wx.stopPullDownRefresh());},
- onReachBottom(){if(mode==="calendar"){this.ui.visibleCities+=3;this.paint();}},
+ onReachBottom(){if(mode==="calendar"){const count=this.store.snapshot().cities.length;if(this.ui.visibleCities>=count)return;this.ui.visibleCities=Math.min(count,this.ui.visibleCities+3);this.paint();}},
  onShareAppMessage(){return {title:"城市 AQI 年度概览",path:"/pages/"+mode+"/index"};},
- paint(){if(!this.ui||this.destroyed)return;if(this.getTabBar&&this.getTabBar())this.getTabBar().setData({hidden:!!this.ui.manager});const view=VM.build(this.store.snapshot(),this.ui);if(mode==="calendar"&&view.cards&&view.cards.length>3){const cards=view.cards;view.cards=[];this.setData({view});cards.forEach((card,i)=>this.setData({["view.cards["+i+"]"]:card}));}else this.setData({view});if(mode==="compare"&&view.aKey&&view.bKey)this.store.setPair([view.aKey,view.bKey]);},
+ paint(){if(!this.ui||this.destroyed)return;if(this.getTabBar&&this.getTabBar())this.getTabBar().setData({hidden:!!this.ui.manager});const view=VM.build(this.store.snapshot(),this.ui);if(mode==="calendar"){
+  const current=this.data.view,patch={},cards=view.cards||[],previous=current.cards||[];
+  Object.keys(view).filter(key=>key!=="cards").forEach(key=>{if(JSON.stringify(current[key])!==JSON.stringify(view[key]))patch["view."+key]=view[key];});
+  // Keep existing cards mounted while appending or refreshing: clearing the list collapses the page and clamps scrollTop to zero.
+  if(cards.length<previous.length)patch["view.cards"]=cards;
+  if(Object.keys(patch).length)this.setData(patch);
+  if(cards.length>=previous.length)cards.forEach((card,i)=>{if(JSON.stringify(previous[i])!==JSON.stringify(card))this.setData({["view.cards["+i+"]"]:card});});
+ }else this.setData({view});if(mode==="compare"&&view.aKey&&view.bKey)this.store.setPair([view.aKey,view.bKey]);},
  noop(){},openManager(){this.ui.manager=true;this.paint();},closeManager(){this.ui.manager=false;this.ui.dragKey=null;this.paint();},
  toggleCity(event){const key=event.currentTarget.dataset.key,s=this.store.snapshot(),keys=s.selected.slice(),i=keys.indexOf(key);if(i<0)keys.push(key);else keys.splice(i,1);this.store.select(keys);this.store.refresh();},
  allCities(){this.store.select(this.store.snapshot().available.map(c=>c.key));this.store.refresh();},clearCities(){this.store.select([]);},

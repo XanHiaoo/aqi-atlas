@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   const source=JSON.parse(document.getElementById("report-data")?.textContent||document.getElementById("data")?.textContent||"{}");
-  const media=matchMedia("(max-width: 767px), (max-width: 960px) and (pointer: coarse)"),months=[];
+  const media=matchMedia("screen"),months=[];
   let cursor=source.start_date.slice(0,7);
   while(cursor<=source.end_date.slice(0,7)){months.push(cursor);const [year,month]=cursor.split("-").map(Number);cursor=new Date(Date.UTC(year,month,1)).toISOString().slice(0,7);}
   const state={date:source.end_date},entries=new Map();

@@ -4,7 +4,7 @@
 .mobile-city-sheet:not([open]) { display: none; }
 .mobile-day-popover { display: none; }
 .city-drag-handle, .city-sort-ghost { display: none; }
-@media (max-width: 767px), (max-width: 960px) and (pointer: coarse) {
+@media screen {
   :root { --mobile-paper: #f4f7fb; --mobile-header-height: 64px; }
   html { scroll-padding-top: 80px; }
   body { background: var(--mobile-paper); -webkit-tap-highlight-color: transparent; }

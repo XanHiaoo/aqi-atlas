@@ -26,7 +26,7 @@ async function dragCity(page, from, to) {
       await context.route('**/*', route => {
         const url = new URL(route.request().url()); requests.push(url.pathname);
         const name = url.pathname === '/aqi-atlas/' ? 'index.html' : url.pathname.slice('/aqi-atlas/'.length);
-        if (url.pathname.startsWith('/aqi-atlas/') && ['index.html', 'compare.html', 'source-policy.md'].includes(name)) {
+        if (url.pathname.startsWith('/aqi-atlas/') && ['index.html', 'compare.html', 'desktop-index.html', 'desktop-compare.html', 'source-policy.md'].includes(name)) {
           return route.fulfill({ body: fs.readFileSync(path.join(root, 'dist', name)), contentType: name.endsWith('.html') ? 'text/html' : 'text/plain' });
         }
         return route.abort();
@@ -214,10 +214,10 @@ async function dragCity(page, from, to) {
         if (width === 390) {
           await page.locator('[data-mobile-city-picker]').click();
           await page.setViewportSize({ width: 1200, height: 900 });
-          await page.waitForFunction(() => document.querySelector('#city-picker').parentElement.tagName === 'MAIN');
-          assert.equal(await page.locator('dialog').evaluate(n => n.open), false);
+          assert.equal(await page.locator('#city-picker').evaluate(n => n.parentElement.tagName), 'DIALOG', 'Mobile interface remains available on a wide screen');
           await page.setViewportSize({ width, height });
           await page.waitForFunction(() => document.querySelector('#city-picker').parentElement.tagName === 'DIALOG');
+          await page.locator('.mobile-sheet-close').click();
           await page.locator('[data-mobile-city-picker]').click();
           await page.locator('dialog').evaluate(node => node.scrollTop = 0);
           const chips = page.locator('#city-options .city-option');
@@ -254,6 +254,7 @@ async function dragCity(page, from, to) {
           await page.locator('.mobile-sheet-close').click();
         }
       } else {
+        assert(page.url().includes('desktop-index.html'));
         assert.equal(await page.locator('#city-picker').evaluate(n => n.parentElement.tagName), 'MAIN');
         assert(await page.locator('.mobile-calendar').first().isHidden());
         assert(await page.locator('.calendar-wrap').first().isVisible());

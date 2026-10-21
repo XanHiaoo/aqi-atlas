@@ -1,0 +1,4 @@
+.layout-controls { order: 99; display: flex; justify-content: flex-end; margin: 22px 0 8px; }
+.layout-switch { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 13px; border: 1px solid #cfdeec; border-radius: 7px; color: #36678d; background: transparent; font: 12px/1.5 "Segoe UI","Microsoft YaHei",sans-serif; text-decoration: none; }
+.layout-switch:focus-visible { outline: 3px solid #2779ad; outline-offset: 3px; }
+@media print { .layout-controls { display: none; } }

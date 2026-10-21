@@ -167,6 +167,14 @@
   .key { gap: 10px; font-size: 10px; }
   .gradient-key { flex-wrap: wrap; gap: 5px; }
   .ramp { width: 100px; }
+  .delta-key { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #e0e8f0; line-height: 1.6; }
+  .delta-key #negative-label { color: #2779ad; }
+  .delta-key #positive-label { color: #b85a2d; text-align: right; }
+  .delta-key .gradient-key { display: block; grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .delta-key .ramp { display: block; width: 100%; height: 8px; }
+  .delta-key .delta-scale { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .delta-missing { display: inline-flex; align-items: center; gap: 6px; grid-column: 1 / -1; }
+  .delta-missing i { width: 10px; height: 10px; border-radius: 2px; background: #d6ddd3; }
   .two-up { display: grid; grid-template-columns: minmax(0, 1fr); gap: 17px; }
   .two-up .panel { padding: 20px 15px; }
   .threshold input { width: min(180px, 45vw); height: 44px; }

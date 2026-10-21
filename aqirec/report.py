@@ -9,15 +9,28 @@ from .colors import COLOR_SCALE
 from .comparison import comparison_metadata
 
 
-def render_page(template: str, inline: str, year_label: str, page: str) -> str:
+def render_page(template: str, inline: str, year_label: str, page: str, *, desktop: bool = False) -> str:
     directory = Path(__file__).parent / "templates"
-    navigation = (directory / "site-nav.html").read_text(encoding="utf-8")
+    prefix = "desktop-" if desktop else ""
+    navigation = (directory / (prefix + "site-nav.html")).read_text(encoding="utf-8")
     navigation = navigation.replace("__CALENDAR_CURRENT__", 'aria-current="page"' if page == "calendar" else "")
     navigation = navigation.replace("__COMPARE_CURRENT__", 'aria-current="page"' if page == "compare" else "")
-    return (template.replace("__AQIREC_DATA__", inline).replace("__AQIREC_YEAR__", year_label)
+    styles = (directory / (prefix + "site.css")).read_text(encoding="utf-8")
+    script = (directory / (prefix + "site.js")).read_text(encoding="utf-8")
+    if desktop:
+        navigation = navigation.replace('href="index.html"', 'href="desktop-index.html"').replace('href="compare.html"', 'href="desktop-compare.html"')
+        script = script.replace('online?"/":"index.html"', '"desktop-index.html"').replace('online?"/compare":"compare.html"', '"desktop-compare.html"')
+        template = template.replace('content="width=device-width, initial-scale=1"', 'content="width=1200"')
+        template = template.replace('content="width=device-width,initial-scale=1"', 'content="width=1200"')
+    else:
+        styles += "\n" + (directory / "mobile.css").read_text(encoding="utf-8")
+        script += "\n" + (directory / "mobile.js").read_text(encoding="utf-8")
+    styles += "\n" + (directory / "view-mode.css").read_text(encoding="utf-8")
+    boot = '<script data-layout="' + ("desktop" if desktop else "mobile") + '">' + (directory / "view-mode.js").read_text(encoding="utf-8") + "</script>"
+    return (template.replace("</head>", boot + "\n</head>").replace("__AQIREC_DATA__", inline).replace("__AQIREC_YEAR__", year_label)
             .replace("__AQIREC_NAV__", navigation)
-            .replace("__AQIREC_SITE_STYLE__", (directory / "site.css").read_text(encoding="utf-8"))
-            .replace("__AQIREC_SITE_SCRIPT__", (directory / "site.js").read_text(encoding="utf-8")))
+            .replace("__AQIREC_SITE_STYLE__", styles)
+            .replace("__AQIREC_SITE_SCRIPT__", script))
 
 
 def write_text_atomic(file: Path, text: str):
@@ -45,6 +58,9 @@ def write_report(report: dict, output: Path) -> Path:
     write_text_atomic(html_file, html)
     comparison_template = (Path(__file__).parent / "templates" / "compare.html").read_text(encoding="utf-8")
     write_text_atomic(output / "compare.html", render_page(comparison_template, inline, year_label, "compare"))
+    for source, target, page in [("report.html", "desktop-index.html", "calendar"), ("compare.html", "desktop-compare.html", "compare")]:
+        frozen = (Path(__file__).parent / "templates" / ("desktop-" + source)).read_text(encoding="utf-8")
+        write_text_atomic(output / target, render_page(frozen, inline, year_label, page, desktop=True))
     with (output / "daily.csv").open("w", newline="", encoding="utf-8-sig") as stream:
         writer = csv.writer(stream)
         writer.writerow(["城市", "日期", "AQI(US)", "状态", "标准", "数据源", "原始页面"])

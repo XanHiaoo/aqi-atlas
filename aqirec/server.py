@@ -216,6 +216,7 @@ def make_handler(dashboard: Dashboard):
                     self.send_json(503, {"error": "无法获取下辖城市，请稍后重试。"})
                 return
             files = {"/": "index.html", "/index.html": "index.html", "/compare": "compare.html", "/compare.html": "compare.html", "/source-policy.md": "source-policy.md",
+                     "/desktop-index.html": "desktop-index.html", "/desktop-compare.html": "desktop-compare.html",
                      "/report.json": "report.json", "/daily.csv": "daily.csv", "/summary.csv": "summary.csv", "/monthly.csv": "monthly.csv"}
             name = files.get(route.path)
             if name is None:

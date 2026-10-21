@@ -37,3 +37,37 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Build the static website
         run: python -m aqirec.pages build
+
+  mobile:
+    name: Mobile browser regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tests/browser/package-lock.json
+      - name: Install browser test dependencies
+        working-directory: tests/browser
+        run: npm ci
+      - name: Install Chromium
+        working-directory: tests/browser
+        run: npx playwright install --with-deps chromium
+      - name: Build the public snapshot
+        run: python -m aqirec.pages build
+      - name: Test portrait, landscape and desktop layouts
+        working-directory: tests/browser
+        run: npm test
+      - name: Save screenshots when a browser test fails
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mobile-test-screenshots
+          path: test-results/mobile
+          if-no-files-found: ignore
+          retention-days: 7

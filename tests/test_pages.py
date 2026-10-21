@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import copy
 import io
 import json
@@ -18,6 +19,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 class PagesTests(unittest.TestCase):
+    def test_desktop_sources_match_last_version_before_mobile_work(self):
+        fingerprints = {
+            "report.html": "803bd1240b0f08c11e85c4208aa39fdc3d47ea089f111fefa964307374319c8a",
+            "compare.html": "b7132ca7668d43b5ec0b83cea5ffb366f22c0005c1f433c64afeb2a1dc5b4cee",
+            "site-nav.html": "8e2406be6737907ad6a0b7eba11b893e31ccb9219e8853ca03774144b7b4edfd",
+            "site.css": "b91496f66980eaf54337888d0df3a5dbf61af0cfd58e4f452d9d795f81a9df15",
+            "site.js": "cb9370e2b1d3fbf923fe94814ece1adb61afd16e08c3e54899ee7bd672b5a5a1",
+        }
+        for name, expected in fingerprints.items():
+            source = (Path(__file__).parents[1] / "aqirec/templates" / ("desktop-" + name)).read_text(encoding="utf-8")
+            self.assertEqual(hashlib.sha256(source.encode()).hexdigest(), expected, name)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -50,7 +63,8 @@ class PagesTests(unittest.TestCase):
         saved = json.loads((output / "report.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["publication"]["mode"], "static")
         self.assertEqual(saved["publication"]["selected_keys"], ["beijing", "hangzhou"])
-        for name, element in [("index.html", "report-data"), ("compare.html", "data")]:
+        for name, element in [("index.html", "report-data"), ("compare.html", "data"),
+                              ("desktop-index.html", "report-data"), ("desktop-compare.html", "data")]:
             text = (output / name).read_text(encoding="utf-8")
             embedded = text.split(f'id="{element}">', 1)[1].split("</script>", 1)[0]
             self.assertEqual(json.loads(embedded), saved)

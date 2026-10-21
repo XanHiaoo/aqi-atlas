@@ -3,6 +3,7 @@
 .mobile-section-jumps, .mobile-month-matrix { display: none; }
 .mobile-city-sheet:not([open]) { display: none; }
 .mobile-day-popover { display: none; }
+.city-drag-handle, .city-sort-ghost { display: none; }
 @media (max-width: 767px), (max-width: 960px) and (pointer: coarse) {
   :root { --mobile-paper: #f4f7fb; --mobile-header-height: 64px; }
   html { scroll-padding-top: 80px; }
@@ -170,6 +171,13 @@
   .mobile-city-sheet .city-search button { min-height: 48px; padding: 8px 13px; font-size: 14px; }
   .mobile-city-sheet .city-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 18px; }
   .mobile-city-sheet .city-option { background: #f7f9fc; border: 1px solid #e1e8f0; border-radius: 11px; }
+  .mobile-city-sheet .city-option { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .mobile-city-sheet .city-drag-handle { display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0; width: 22px; min-height: 44px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #829bb0; cursor: grab; touch-action: none; }
+  .city-drag-handle::before { content: ''; width: 12px; height: 18px; background: radial-gradient(circle at 3px 3px, currentColor 1px, transparent 1.5px) 0 0 / 6px 6px; }
+  .mobile-city-sheet .city-drag-handle:focus-visible { outline: 2px solid #2879b4; outline-offset: -2px; }
+  .mobile-city-sheet .city-option.is-dragging { opacity: .25; }
+  .mobile-city-sheet .city-sort-ghost { display: flex; position: fixed; z-index: 12; pointer-events: none; margin: 0; box-shadow: none; border-color: #2879b4; }
+  .city-sort-active .city-option { transition: none; }
   .mobile-city-sheet .city-option:has(input:checked) { border-color: #8eb1d0; background: #edf5fd; }
   .mobile-city-sheet .city-option-label { min-height: 56px; gap: 6px; padding: 10px 2px 10px 10px; }
   .mobile-city-sheet .city-option-label > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }

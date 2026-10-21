@@ -89,13 +89,70 @@
     if(placement==="prepend")anchor.prepend(tools);else anchor.before(tools);
   }
   function calendar(options){const node=make("div","mobile-calendar");const entry={options,rows:new Map(options.days.map(row=>[row.date,row]))};entries.set(node,entry);paint(node,entry);queueMicrotask(connected);return node;}
+  let sortContainer=null,sortCallback=null,sortDrag=null,sortBlockClick=false,sortFrame=0;
+  const sortKeys=()=>[...sortContainer.children].map(chip=>chip.dataset.city);
+  function sortFinish(commit){
+    const drag=sortDrag;if(!drag)return;sortDrag=null;clearTimeout(drag.timer);cancelAnimationFrame(sortFrame);
+    if(drag.active){
+      drag.ghost.remove();drag.chip.classList.remove("is-dragging");document.documentElement.classList.remove("city-sort-active");window.aqiSite.setBusy(false);sortBlockClick=true;
+      if(!commit)for(const key of drag.before){const chip=[...sortContainer.children].find(node=>node.dataset.city===key);if(chip)sortContainer.append(chip);}
+      if(sortContainer.hasPointerCapture(drag.pointerId))sortContainer.releasePointerCapture(drag.pointerId);
+      if(commit&&JSON.stringify(drag.before)!==JSON.stringify(sortKeys())){sortCallback(sortKeys());document.getElementById("city-sort-status").textContent=drag.name+"已移动到第 "+(sortKeys().indexOf(drag.chip.dataset.city)+1)+" 位";}
+    }
+  }
+  function sortMove(){
+    const drag=sortDrag;if(!drag?.active)return;
+    drag.ghost.style.left=(drag.x-drag.dx)+"px";drag.ghost.style.top=(drag.y-drag.dy)+"px";
+    const target=document.elementFromPoint(drag.x,drag.y)?.closest(".city-option");
+    if(target&&target!==drag.chip&&target.parentNode===sortContainer){const chips=[...sortContainer.children];sortContainer.insertBefore(drag.chip,chips.indexOf(target)<chips.indexOf(drag.chip)?target:target.nextSibling);}
+  }
+  function sortTick(){
+    const drag=sortDrag;if(!drag?.active)return;
+    const scroller=sortContainer.closest(".mobile-city-sheet"),rect=scroller.getBoundingClientRect(),edge=42;
+    const speed=drag.y<rect.top+edge?-(rect.top+edge-drag.y)/4:drag.y>rect.bottom-edge?(drag.y-rect.bottom+edge)/4:0;
+    if(speed){scroller.scrollTop+=Math.max(-14,Math.min(14,speed));sortMove();}sortFrame=requestAnimationFrame(sortTick);
+  }
+  function sortStart(){
+    const drag=sortDrag;if(!drag)return;
+    const rect=drag.chip.getBoundingClientRect();drag.active=true;drag.dx=drag.x-rect.left;drag.dy=drag.y-rect.top;drag.ghost=drag.chip.cloneNode(true);drag.ghost.classList.add("city-sort-ghost");drag.ghost.setAttribute("aria-hidden","true");drag.ghost.inert=true;drag.ghost.style.width=rect.width+"px";drag.ghost.style.height=rect.height+"px";
+    sortContainer.closest(".mobile-city-sheet").append(drag.ghost);drag.chip.classList.add("is-dragging");document.documentElement.classList.add("city-sort-active");sortContainer.setPointerCapture(drag.pointerId);window.aqiSite.setBusy(true);sortMove();sortTick();
+  }
+  function citySorting(container,callback){
+    sortCallback=callback;
+    for(const chip of container.children){
+      if(chip.querySelector(".city-drag-handle"))continue;
+      const handle=make("button","city-drag-handle"),name=chip.querySelector("input").getAttribute("aria-label");handle.type="button";handle.setAttribute("aria-label","拖动排序："+name);handle.setAttribute("aria-describedby","city-sort-help");handle.setAttribute("aria-keyshortcuts","ArrowLeft ArrowRight ArrowUp ArrowDown");chip.insertBefore(handle,chip.querySelector(".city-delete"));
+    }
+    if(sortContainer===container)return;sortContainer=container;
+    const help=make("span","sr-only","按住城市卡片或拖动手柄排序；手柄获得焦点后可用方向键调整顺序。"),status=make("span","sr-only");help.id="city-sort-help";status.id="city-sort-status";status.setAttribute("role","status");container.after(help,status);
+    container.addEventListener("pointerdown",event=>{
+      sortBlockClick=false;if(!media.matches||!event.isPrimary||event.button!==0||event.target.closest(".city-delete,input"))return;
+      const chip=event.target.closest(".city-option");if(!chip||chip.parentNode!==container)return;
+      sortDrag={chip,pointerId:event.pointerId,x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,before:sortKeys(),name:chip.querySelector("input").getAttribute("aria-label"),active:false};
+      if(event.target.closest(".city-drag-handle")){event.preventDefault();event.target.closest(".city-drag-handle").focus({preventScroll:true});sortStart();}else sortDrag.timer=setTimeout(sortStart,350);
+    });
+    container.addEventListener("click",event=>{if(sortBlockClick){sortBlockClick=false;event.preventDefault();event.stopImmediatePropagation();}},true);
+    document.addEventListener("pointermove",event=>{const drag=sortDrag;if(!drag||event.pointerId!==drag.pointerId)return;drag.x=event.clientX;drag.y=event.clientY;if(drag.active){event.preventDefault();sortMove();}else if(Math.hypot(drag.x-drag.startX,drag.y-drag.startY)>8)sortFinish(false);},{passive:false});
+    document.addEventListener("touchmove",event=>{if(sortDrag?.active)event.preventDefault();},{passive:false});
+    document.addEventListener("pointerup",event=>{if(sortDrag?.pointerId===event.pointerId)sortFinish(true);});
+    document.addEventListener("pointercancel",event=>{if(sortDrag?.pointerId===event.pointerId)sortFinish(false);});
+    document.addEventListener("keydown",event=>{if(event.key==="Escape"&&sortDrag){event.preventDefault();event.stopImmediatePropagation();sortFinish(false);}},{capture:true});
+    container.addEventListener("lostpointercapture",event=>{if(event.target===container)sortFinish(false);});
+    container.addEventListener("contextmenu",event=>{if(sortDrag)event.preventDefault();});
+    container.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&sortDrag){event.preventDefault();event.stopPropagation();sortFinish(false);return;}
+      const handle=event.target.closest(".city-drag-handle");if(!handle||!media.matches)return;
+      const chips=[...container.children],columns=chips.filter(chip=>Math.abs(chip.getBoundingClientRect().top-chips[0].getBoundingClientRect().top)<2).length,move={ArrowLeft:-1,ArrowRight:1,ArrowUp:-columns,ArrowDown:columns}[event.key];
+      if(move){event.preventDefault();const chip=handle.closest(".city-option"),from=chips.indexOf(chip),to=Math.max(0,Math.min(chips.length-1,from+move));if(from!==to){const keys=sortKeys(),key=keys.splice(from,1)[0];keys.splice(to,0,key);sortCallback(keys);handle.focus({preventScroll:true});status.textContent=chip.querySelector("input").getAttribute("aria-label")+"已移动到第 "+(to+1)+" 位";}}
+    });
+  }
   let sheet=null,placeholder=null,picker=null;
-  function closePicker(){if(sheet?.open)sheet.close();}
+  function closePicker(){sortFinish(false);if(sheet?.open)sheet.close();}
   function openPicker(){if(!sheet)return;closeDayPopover();sheet.showModal();document.documentElement.classList.add("mobile-sheet-open");sheet.querySelector(".mobile-sheet-close").focus();}
   function setupPicker(){
     if(!picker)picker=document.getElementById("city-picker");if(!picker)return;
     if(media.matches){
-      if(!sheet){sheet=make("dialog","mobile-city-sheet");sheet.setAttribute("aria-label","管理对比城市");const bar=make("div","mobile-sheet-bar"),handle=make("i","mobile-sheet-handle"),close=make("button","mobile-sheet-close","×");close.type="button";close.setAttribute("aria-label","关闭城市选择");close.addEventListener("click",closePicker);bar.append(handle,close);sheet.append(bar);document.body.append(sheet);sheet.addEventListener("click",event=>{if(event.target===sheet){const rect=sheet.getBoundingClientRect();if(event.clientY<rect.top||event.clientX<rect.left||event.clientX>rect.right)closePicker();}});sheet.addEventListener("close",()=>{document.documentElement.classList.remove("mobile-sheet-open");if(location.hash==="#city-picker")history.replaceState(null,"",location.pathname+location.search);});}
+      if(!sheet){sheet=make("dialog","mobile-city-sheet");sheet.setAttribute("aria-label","管理对比城市");const bar=make("div","mobile-sheet-bar"),handle=make("i","mobile-sheet-handle"),close=make("button","mobile-sheet-close","×");close.type="button";close.setAttribute("aria-label","关闭城市选择");close.addEventListener("click",closePicker);bar.append(handle,close);sheet.append(bar);document.body.append(sheet);sheet.addEventListener("click",event=>{if(event.target===sheet){const rect=sheet.getBoundingClientRect();if(event.clientY<rect.top||event.clientX<rect.left||event.clientX>rect.right)closePicker();}});sheet.addEventListener("close",()=>{sortFinish(false);document.documentElement.classList.remove("mobile-sheet-open");if(location.hash==="#city-picker")history.replaceState(null,"",location.pathname+location.search);});}
       if(picker.parentNode!==sheet){placeholder=document.createComment("city picker desktop position");picker.before(placeholder);sheet.append(picker);}
     }else if(placeholder){closePicker();placeholder.replaceWith(picker);placeholder=null;}
   }
@@ -112,8 +169,8 @@
     }
     if(media.matches&&location.hash==="#city-picker")openPicker();
   }
-  media.addEventListener("change",()=>{setupPicker();refresh();});
+  media.addEventListener("change",()=>{sortFinish(false);setupPicker();refresh();});
   function visibility(visible){document.querySelectorAll(".mobile-calendar-tools,.mobile-section-jumps").forEach(node=>node.hidden=!visible);}
-  window.aqiMobile={calendar,toolbar,visibility,monthMatrix};
+  window.aqiMobile={calendar,toolbar,visibility,monthMatrix,citySorting};
   document.addEventListener("DOMContentLoaded",initialize);
 })();

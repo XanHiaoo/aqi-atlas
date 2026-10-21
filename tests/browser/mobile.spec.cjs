@@ -7,6 +7,13 @@ const root = path.resolve(__dirname, '../..');
 const output = path.join(root, process.env.AQI_BROWSER_OUTPUT || 'test-results/mobile');
 const base = 'http://aqi.test/aqi-atlas/';
 const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), 'utf8'));
+async function dragCity(page, from, to) {
+  const handle = await from.locator('.city-drag-handle').boundingBox(), target = await to.boundingBox();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
+  await page.mouse.up();
+}
 
 (async () => {
   fs.mkdirSync(output, { recursive: true });
@@ -187,6 +194,40 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
           assert.equal(await page.locator('dialog').evaluate(n => n.open), false);
           await page.setViewportSize({ width, height });
           await page.waitForFunction(() => document.querySelector('#city-picker').parentElement.tagName === 'DIALOG');
+          await page.locator('[data-mobile-city-picker]').click();
+          await page.locator('dialog').evaluate(node => node.scrollTop = 0);
+          const chips = page.locator('#city-options .city-option');
+          const order = () => chips.evaluateAll(nodes => nodes.map(node => node.dataset.city));
+          const checked = () => page.locator('#city-options input:checked').evaluateAll(nodes => nodes.map(node => node.value).sort());
+          const before = await order(), beforeChecked = await checked();
+          await dragCity(page, chips.nth(0), chips.nth(1));
+          const swapped = [...before]; [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
+          assert.deepEqual(await order(), swapped, 'Drag handles reorder city cards');
+          assert.deepEqual(await checked(), beforeChecked, 'Dragging preserves checkbox states');
+          const candidate = swapped[2];
+          await page.locator(`input[name="city"][value="${candidate}"]`).uncheck();
+          await dragCity(page, chips.nth(2), chips.nth(0));
+          assert.equal((await order())[0], candidate, 'Unselected city cards can also be reordered');
+          assert(await page.locator(`input[name="city"][value="${candidate}"]`).isChecked() === false);
+          await chips.first().locator('.city-drag-handle').press('ArrowRight');
+          const arranged = await order();
+          assert.equal(arranged[1], candidate, 'Keyboard arrows reorder the same list');
+          const selectedOrder = arranged.filter(key => key !== candidate);
+          assert.deepEqual(await page.locator('#cities .city h2').allTextContents(), selectedOrder.map(key => report.cities.find(city => city.key === key).name));
+          assert.deepEqual(await monthly.locator('thead th[data-city]').evaluateAll(nodes => nodes.map(node => node.dataset.city)), selectedOrder, 'Monthly columns follow dragging');
+          assert.deepEqual(await page.locator('#selected-values > span').evaluateAll(nodes => nodes.map(node => node.firstChild.textContent)), selectedOrder.map(key => report.cities.find(city => city.key === key).name));
+          const grip = await chips.first().locator('.city-drag-handle').boundingBox(), second = await chips.nth(1).boundingBox();
+          await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2); await page.mouse.down();
+          await page.mouse.move(second.x + second.width / 2, second.y + second.height / 2, { steps: 8 });
+          await page.keyboard.press('Escape'); await page.mouse.up();
+          assert.deepEqual(await order(), arranged, 'Cancelling a drag restores the prior order');
+          await page.locator('.mobile-sheet-close').click();
+          await page.reload();
+          await page.locator('[data-mobile-city-picker]').click();
+          assert.deepEqual(await order(), arranged, 'Custom city order survives a reload');
+          assert(await page.locator(`input[name="city"][value="${candidate}"]`).isChecked() === false);
+          await page.locator('dialog').screenshot({ path: path.join(output, 'city-sort.png') });
+          await page.locator('.mobile-sheet-close').click();
         }
       } else {
         assert.equal(await page.locator('#city-picker').evaluate(n => n.parentElement.tagName), 'MAIN');

@@ -90,6 +90,11 @@ const metric = "mean";
 let selectedDate = report.end_date;
 let liveData={today:new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Shanghai"}).format(new Date()),cities:[]},liveLoading=false,liveRetry;
 const selectionStorageKey = "aqirec:selected-cities:v1";
+const cityOrderStorageKey = "aqirec:city-order:v1";
+let cityPickerOrder=null;
+try{const saved=JSON.parse(localStorage.getItem(cityOrderStorageKey));if(Array.isArray(saved)&&saved.every(key=>typeof key==="string"))cityPickerOrder=saved;}catch{}
+function pickerOrder(){const available=new Set(report.cities.map(city=>city.key));return [...new Set([...(cityPickerOrder||[]),...available])].filter(key=>available.has(key));}
+function orderedSelection(keys){const wanted=new Set(keys);return cityPickerOrder?pickerOrder().filter(key=>wanted.has(key)):[...wanted];}
 const cityColor=index=>index<6?["#346d55","#909f5b","#8ab6ab","#597a9e","#a1789c","#bd8b56"][index]:`hsl(${(210+(index-6)*137.508)%360} 42% 46%)`;
 const cityColors = new Map(report.cities.map((city,index)=>[city.key,cityColor(index)]));
 let selectedCityKeys = new Set(report.cities.map(city=>city.key));
@@ -102,7 +107,7 @@ function restoreSelection(){
   if(Array.isArray(saved)&&saved.every(key=>typeof key==="string")){
     hasLocalSelection=true;
     const valid=saved.filter(key=>report.cities.some(city=>city.key===key));
-    selectedCityKeys=new Set(valid);
+    selectedCityKeys=new Set(orderedSelection(valid));
   }
 }
 restoreSelection();
@@ -113,11 +118,16 @@ function saveSelection(sync=true){
   try{const url=new URL(location.href);url.searchParams.set("cities",keys.join(","));history.replaceState(null,"",url);}catch{}
   if(sync)window.aqiSite.syncSelection();
 }
-function changeSelection(keys){selectedCityKeys=new Set(keys);saveSelection();render();}
+function changeSelection(keys){selectedCityKeys=new Set(orderedSelection(keys));saveSelection();render();}
+function reorderCities(keys){
+  const before=[...selectedCityKeys];cityPickerOrder=keys;cityPickerOrder=pickerOrder();
+  try{localStorage.setItem(cityOrderStorageKey,JSON.stringify(cityPickerOrder));}catch{}
+  selectedCityKeys=new Set(orderedSelection(before));saveSelection(JSON.stringify(before)!==JSON.stringify([...selectedCityKeys]));render();
+}
 function buildCityPicker(){
   byId("city-options").replaceChildren();
   for(const city of report.cities){
-    const chip=document.createElement("div");chip.className="city-option";
+    const chip=document.createElement("div");chip.className="city-option";chip.dataset.city=city.key;
     const label=document.createElement("label");label.className="city-option-label";
     const input=document.createElement("input");input.type="checkbox";input.value=city.key;input.name="city";input.setAttribute("aria-label",city.name);input.checked=selectedCityKeys.has(city.key);
     input.addEventListener("change",()=>{const next=new Set(selectedCityKeys);input.checked?next.add(city.key):next.delete(city.key);changeSelection(next);});
@@ -126,11 +136,12 @@ function buildCityPicker(){
     const remove=document.createElement("button");remove.type="button";remove.className="city-delete";remove.textContent="×";remove.title="删除"+city.name;remove.setAttribute("aria-label","删除"+city.name);remove.addEventListener("click",()=>deleteCity(city,remove));
     remove.hidden=window.aqiSite.isStatic;chip.append(label,remove);byId("city-options").append(chip);
   }
+  window.aqiMobile.citySorting(byId("city-options"),reorderCities);
 }
 function orderCityPicker(cities){
   const container=byId("city-options"),focused=document.activeElement;
   const chips=new Map([...container.children].map(chip=>[chip.querySelector("input").value,chip]));
-  const ordered=[...cities,...report.cities.filter(city=>!selectedCityKeys.has(city.key))];
+  const ordered=cityPickerOrder?pickerOrder().map(key=>report.cities.find(city=>city.key===key)):[...cities,...report.cities.filter(city=>!selectedCityKeys.has(city.key))];
   ordered.forEach((city,index)=>{
     const chip=chips.get(city.key);
     if(chip&&container.children[index]!==chip)container.insertBefore(chip,container.children[index]||null);

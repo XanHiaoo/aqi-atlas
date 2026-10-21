@@ -23,9 +23,9 @@
   .site-tab-icon { display: block; width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
   .hero { padding: 14px 0 21px; display: block; }
   .hero p { font-size: 13px; line-height: 1.8; }
-  #city-subtitle { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  #city-subtitle, #calendar-hint { display: none; }
   .year { display: none; }
-  .meta { margin-top: 9px; gap: 4px 13px; font-size: 11px; }
+  .meta { margin-top: 0; gap: 4px 13px; font-size: 11px; }
   .selected { margin-bottom: 19px; }
   .selected-date { font-size: 13px; margin-bottom: 12px; }
   .selected-values { display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(118px, 36%); gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 1px 1px 9px; scrollbar-width: none; }

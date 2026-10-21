@@ -62,21 +62,20 @@
     if(!matrixSource||!media.matches)return;
     let output=document.getElementById("mobile-month-matrix");
     if(!output){output=make("div","mobile-month-matrix");output.id="mobile-month-matrix";matrixSource.closest(".month-matrix-scroll").after(output);}
-    output.replaceChildren();
     const rows=[...matrixSource.tBodies[0].rows],labels=[...matrixSource.tHead.rows[0].cells].slice(1).map(cell=>cell.textContent);
-    for(let start=0;start<rows.length;start+=3){
-      const cities=rows.slice(start,start+3),group=make("section","mobile-month-group"),table=make("table","mobile-month-table"),head=make("thead",""),heading=make("tr",""),body=make("tbody","");group.setAttribute("aria-label",cities.map(row=>row.cells[0].textContent).join("、"));
+    const keys=rows.map(row=>row.cells[1].firstElementChild.dataset.city).join(","),previous=keys===output.dataset.cities?output.querySelector(".mobile-month-scroll")?.scrollLeft||0:0;output.dataset.cities=keys;output.replaceChildren();if(!rows.length)return;
+    const cities=rows,columns=Math.max(3,cities.length),scroll=make("div","mobile-month-scroll"),table=make("table","mobile-month-table"),head=make("thead",""),heading=make("tr",""),body=make("tbody","");scroll.setAttribute("role","region");scroll.setAttribute("aria-label","城市月份比较，左右滑动查看更多城市");scroll.tabIndex=0;table.style.setProperty("--mobile-month-columns",columns);
+    const widths=make("colgroup",""),monthWidth=make("col","");monthWidth.style.width="50px";widths.append(monthWidth);for(let i=0;i<columns;i++){const width=make("col","");width.style.width="var(--mobile-month-city-width)";widths.append(width);}table.append(widths);
       const corner=make("th","","月份 / 城市");corner.scope="col";heading.append(corner);
-      for(const city of cities){const name=make("th","",city.cells[0].textContent);name.scope="col";heading.append(name);}head.append(heading);table.append(head,body);
+      for(const city of cities){const name=make("th","",city.cells[0].textContent);name.scope="col";name.dataset.city=city.cells[1].firstElementChild.dataset.city;heading.append(name);}for(let i=cities.length;i<columns;i++){const blank=make("th","mobile-month-empty");blank.setAttribute("aria-hidden","true");heading.append(blank);}head.append(heading);table.append(head,body);
       labels.forEach((label,monthIndex)=>{
         const row=make("tr",""),month=make("th","",label);month.scope="row";row.dataset.month=cities[0].cells[monthIndex+1].firstElementChild.dataset.month;row.append(month);
         for(const city of cities){
           const original=city.cells[monthIndex+1].firstElementChild,cell=make("td",""),button=make("div",original.className);button.dataset.mobileMonthCell="";button.dataset.city=original.dataset.city;button.dataset.month=original.dataset.month;button.dataset.detail=original.title;button.style.cssText=original.style.cssText;button.setAttribute("role","img");button.setAttribute("aria-label",original.getAttribute("aria-label"));button.append(...[...original.childNodes].map(node=>node.cloneNode(true)));
           cell.append(button);row.append(cell);
         }
-        body.append(row);
-      });group.append(table);output.append(group);
-    }
+        for(let i=cities.length;i<columns;i++){const blank=make("td","mobile-month-empty");blank.setAttribute("aria-hidden","true");row.append(blank);}body.append(row);
+      });scroll.append(table);output.append(scroll);scroll.scrollLeft=previous;
   }
   function monthMatrix(table){matrixSource=table;paintMonthMatrix();}
   function refresh(){

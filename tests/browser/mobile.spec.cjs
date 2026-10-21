@@ -118,13 +118,20 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         assert(await page.locator('.month-matrix-scroll').isHidden());
         assert(await page.locator('.month-matrix-options').isHidden(), 'Monthly settings and coverage note stay out of the mobile layout');
         assert(await page.locator('#month-common-days').isChecked(), 'Removing settings preserves the existing statistics policy');
-        assert.equal(await monthly.locator('.mobile-month-group').count(), Math.ceil(selected.length / 3));
-        const groups = await monthly.locator('.mobile-month-group').all();
-        for (const group of groups) {
-          assert(await group.evaluate(n => n.scrollWidth <= n.clientWidth), 'All monthly city groups fit without horizontal scrolling');
-          assert.equal(await group.locator('tbody tr[data-month]').count(), monthBlocks.length);
-          assert(await group.locator('thead th').count() <= 4);
-        }
+        const cityScroll = monthly.locator('.mobile-month-scroll');
+        assert.equal(await monthly.locator('table').count(), 1, 'All cities share one monthly table');
+        assert.equal(await monthly.locator('tbody tr[data-month]').count(), monthBlocks.length);
+        const columnWidth = await monthly.locator('[data-mobile-month-cell]').first().evaluate(n => n.getBoundingClientRect().width);
+        assert(Math.abs(columnWidth - ((await cityScroll.evaluate(n => n.clientWidth)) - 70) / 3) < 1, 'Exactly three city columns fill the available width');
+        assert(await cityScroll.evaluate(n => n.scrollWidth > n.clientWidth), 'More than three cities can scroll horizontally');
+        await cityScroll.evaluate(n => n.scrollLeft = 200);
+        const scrollerBounds = await cityScroll.boundingBox(), monthBounds = await monthly.locator('tbody th').first().boundingBox();
+        assert(Math.abs(scrollerBounds.x - monthBounds.x) < 1, 'Months stay fixed while city columns scroll');
+        const savedScroll = await cityScroll.evaluate(n => n.scrollLeft);
+        await page.locator('[data-month-metric="median"]').click();
+        assert(Math.abs(await cityScroll.evaluate(n => n.scrollLeft) - savedScroll) < 1, 'Metric changes preserve the visible cities');
+        await page.locator('[data-month-metric="good-share"]').click();
+        await cityScroll.evaluate(n => n.scrollLeft = 0);
         const snapshot = selector => page.locator(selector).evaluateAll(buttons => {
           const context = document.createElement('canvas').getContext('2d');
           return buttons.map(button => ({
@@ -135,7 +142,7 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
           detail: button.dataset.detail || button.title,
         })).sort((a, b) => a.key.localeCompare(b.key)); });
         assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'), 'Mobile months preserve every statistic, valid-day count, color and detail');
-        const monthlyCell = monthly.locator('[data-mobile-month-cell]').nth(4);
+        const monthlyCell = monthly.locator('[data-mobile-month-cell]').nth(1);
         const matrixHeight = await monthly.evaluate(node => node.offsetHeight);
         await monthlyCell.click();
         assert.equal(await monthly.evaluate(node => node.offsetHeight), matrixHeight);
@@ -144,10 +151,27 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         await page.locator('[data-month-metric="median"]').click();
         assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'));
         assert(await monthly.evaluate(n => n.scrollWidth <= n.clientWidth));
-        const monthlyNames = await monthly.locator('thead th:not(:first-child)').allTextContents();
+        const monthlyNames = await monthly.locator('thead th[data-city]').allTextContents();
         assert.deepEqual(monthlyNames, await page.locator('#cities .city h2').allTextContents(), 'Monthly column order follows city selection');
-        await groups[0].evaluate(n => scrollTo(0, n.getBoundingClientRect().top + scrollY - document.querySelector('.site-header').offsetHeight - 10));
+        await monthly.evaluate(n => scrollTo(0, n.getBoundingClientRect().top + scrollY - document.querySelector('.site-header').offsetHeight - 10));
         await page.screenshot({ path: path.join(output, `monthly-${width}-${height}.png`) });
+        if (width === 390) {
+          for (const count of [1, 2, 3]) {
+            await page.locator('[data-mobile-city-picker]').click();
+            await page.locator('#clear-cities').click();
+            for (const key of selected.slice(0, count)) await page.locator(`input[name="city"][value="${key}"]`).check();
+            await page.locator('.mobile-sheet-close').click();
+            assert.equal(await monthly.locator('thead th').count(), 4, 'Missing city columns remain empty');
+            assert.equal(await monthly.locator('thead .mobile-month-empty').count(), 3 - count);
+            const subsetWidth = await monthly.locator('[data-mobile-month-cell]').first().evaluate(n => n.getBoundingClientRect().width);
+            assert(Math.abs(subsetWidth - columnWidth) < 1, 'One or two selected cities never expand their columns');
+            assert(await cityScroll.evaluate(n => n.scrollWidth <= n.clientWidth + 1));
+            await page.screenshot({ path: path.join(output, `monthly-${count}-cities.png`) });
+          }
+          await page.locator('[data-mobile-city-picker]').click();
+          await page.locator('#select-all-cities').click();
+          await page.locator('.mobile-sheet-close').click();
+        }
         await page.locator('.mobile-section-jumps a[href="#ecdf-section"]').click();
         await page.locator('#ecdf-legend button').first().click();
         assert.equal(await page.locator('#ecdf-legend [aria-pressed="true"]').count(), 1);

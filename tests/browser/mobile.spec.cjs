@@ -97,6 +97,8 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         assert.equal(await page.locator('#month-matrix tbody tr').count(), selected.length);
         const monthly = page.locator('#mobile-month-matrix');
         assert(await page.locator('.month-matrix-scroll').isHidden());
+        assert(await page.locator('.month-matrix-options').isHidden(), 'Monthly settings and coverage note stay out of the mobile layout');
+        assert(await page.locator('#month-common-days').isChecked(), 'Removing settings preserves the existing statistics policy');
         assert.equal(await monthly.locator('.mobile-month-group').count(), Math.ceil(selected.length / 3));
         const groups = await monthly.locator('.mobile-month-group').all();
         for (const group of groups) {
@@ -113,10 +115,25 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         })).sort((a, b) => a.key.localeCompare(b.key)));
         assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'), 'Mobile months preserve every statistic, valid-day count, color and detail');
         const monthlyCell = monthly.locator('[data-mobile-month-cell]').nth(4);
+        const matrixHeight = await monthly.evaluate(node => node.offsetHeight);
         await monthlyCell.click();
-        assert.equal(await monthly.locator('.mobile-month-detail-row').innerText(), await monthlyCell.getAttribute('title'));
+        const popover = page.locator('#mobile-month-popover');
+        assert(await popover.isVisible());
+        assert.equal((await popover.locator('.mobile-month-popover-copy > *').allTextContents()).join(' · '), await monthlyCell.getAttribute('title'));
+        assert.equal(await monthly.evaluate(node => node.offsetHeight), matrixHeight, 'Details float without moving table rows');
+        const popupBounds = await popover.boundingBox(), headerBounds = await page.locator('.site-header').boundingBox(), navBounds = await page.locator('.site-navigation').boundingBox();
+        assert(popupBounds.x >= 0 && popupBounds.x + popupBounds.width <= width);
+        assert(popupBounds.y >= headerBounds.y + headerBounds.height && popupBounds.y + popupBounds.height <= navBounds.y);
+        await popover.locator('.mobile-month-popover-close').click();
+        assert(await popover.isHidden());
+        assert.equal(await monthlyCell.getAttribute('aria-expanded'), 'false');
+        await monthlyCell.click();
+        await page.keyboard.press('Escape');
+        assert(await popover.isHidden());
+        await monthlyCell.click();
+        await page.mouse.click(5, 5);
+        assert(await popover.isHidden(), 'A tap outside dismisses the floating details');
         await page.locator('[data-month-metric="median"]').click();
-        await page.locator('#month-common-days').uncheck();
         assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'));
         assert(await monthly.evaluate(n => n.scrollWidth <= n.clientWidth));
         const monthlyNames = await monthly.locator('thead th:not(:first-child)').allTextContents();
@@ -143,6 +160,7 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         assert.equal(await page.locator('#city-picker').evaluate(n => n.parentElement.tagName), 'MAIN');
         assert(await page.locator('.mobile-calendar').first().isHidden());
         assert(await page.locator('.calendar-wrap').first().isVisible());
+        assert(await page.locator('.month-matrix-options').isVisible());
       }
       await page.locator('[data-site-page="compare"]').click();
       await page.waitForSelector('#mean-delta');

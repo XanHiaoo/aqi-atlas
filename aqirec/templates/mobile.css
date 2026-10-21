@@ -2,6 +2,7 @@
 .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
 .mobile-section-jumps, .mobile-month-matrix { display: none; }
 .mobile-city-sheet:not([open]) { display: none; }
+.mobile-month-popover { display: none; }
 @media (max-width: 767px), (max-width: 960px) and (pointer: coarse) {
   :root { --mobile-paper: #f4f7fb; --mobile-header-height: 64px; }
   html { scroll-padding-top: 80px; }
@@ -79,9 +80,8 @@
   .month-matrix-heading h2, .ecdf-panel h2, .section-head h2 { font-size: 18px; }
   .month-matrix-metrics { display: flex; width: 100%; }
   .month-matrix-metrics button { flex: 1; min-height: 42px; padding: 7px 5px; font-size: 12px; }
-  .month-matrix-options { font-size: 11px; gap: 10px; }
-  .month-matrix-options label { min-height: 34px; }
-  .month-matrix-options input { width: 17px; height: 17px; }
+  .month-matrix-options { display: none; }
+  .month-matrix-heading { margin-bottom: 15px; }
   .month-matrix-cell { min-height: 66px; }
   .month-matrix th:first-child { width: 80px; }
   .month-matrix-detail { font-size: 11px; }
@@ -97,7 +97,11 @@
   .mobile-month-table .month-matrix-cell strong { font-size: 13px; }
   .mobile-month-table .month-matrix-cell small { font-size: 8px; }
   .mobile-month-table .month-matrix-cell.is-selected { outline: 2px solid #2879b4; outline-offset: 0; }
-  .mobile-month-table .mobile-month-detail-row td { padding: 8px 4px 12px; color: var(--muted); font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+  .mobile-month-popover:popover-open { display: block; position: fixed; inset: auto; margin: 0; width: min(320px, calc(100vw - 24px)); padding: 14px 16px; border: 1px solid #c6daeb; border-radius: 14px; background: #f7fbff; color: var(--muted); box-shadow: none; overflow-y: auto; }
+  .mobile-month-popover-copy { display: flex; flex-direction: column; gap: 6px; font-size: 11px; line-height: 1.6; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .mobile-month-popover-title { padding-right: 34px; color: var(--ink); font-size: 13px; font-weight: 600; }
+  .mobile-month-popover-value { color: var(--ink); font-size: 12px; }
+  .mobile-month-popover-close { position: absolute; top: 2px; right: 2px; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 22px; }
   .ecdf-panel { margin-top: 24px; }
   .ecdf-heading { gap: 12px; }
   .ecdf-heading button { min-height: 42px; }
@@ -209,7 +213,7 @@
 }
 @media print {
   .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
-  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix { display: none !important; }
+  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix, .mobile-month-popover { display: none !important; }
   .calendar-wrap, #delta-calendar > .calendar { display: block !important; }
   .month-matrix-scroll, #month-matrix-detail { display: block !important; }
 }

@@ -39,14 +39,17 @@ async function dragCity(page, from, to) {
       assert.equal(await page.locator('#cities .city').count(), selected.length);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       if (mobile) {
-        assert.deepEqual(await page.locator('.mobile-section-jumps a').allTextContents(), ['日历', '实时', '月历', '统计']);
+        assert.deepEqual(await page.locator('.mobile-view-link').allTextContents(), ['日历', '实时', '月历', '统计']);
+        assert.equal(await page.locator('.site-navigation .site-tab:visible').count(), 5);
+        assert.equal(await page.locator('.mobile-section-jumps').count(), 0);
+        assert.equal(await page.locator('.site-navigation .mobile-view-link').count(), 4, 'City views share the bottom navigation');
         assert.equal(await page.locator('html').getAttribute('data-mobile-city-view'), 'calendar');
         assert(await page.locator('#selected-comparison').isHidden());
         assert(await page.locator('#monthly-section').isHidden());
         assert(await page.locator('#ecdf-section').isHidden());
         assert(await page.locator('#mobile-realtime-strip').isVisible());
         assert.deepEqual(await page.locator('.mobile-live-values > span').allTextContents(), await page.locator('#selected-values > span').allTextContents());
-        await page.locator('.mobile-section-jumps a[data-view="realtime"]').click();
+        await page.locator('.mobile-view-link[data-view="realtime"]').click();
         assert(await page.locator('#selected-comparison').isVisible());
         assert(await page.locator('#cities').isHidden());
         assert(await page.locator('#mobile-realtime-strip').isHidden());
@@ -129,12 +132,13 @@ async function dragCity(page, from, to) {
         await page.locator('#clear-cities').click();
         assert.equal(await page.locator('#cities .city').count(), 0);
         assert(await page.locator('#mobile-calendar-tools').isHidden());
-        assert(await page.locator('.mobile-section-jumps').isHidden());
+        assert.equal(await page.locator('.mobile-section-jumps').count(), 0);
+        assert.equal(await page.locator('.site-navigation .site-tab:visible').count(), 5);
         await page.locator('#select-all-cities').click();
         assert.equal(await page.locator('#cities .city').count(), selected.length);
         await page.locator('.mobile-sheet-close').click();
         assert.equal(await page.locator('dialog').evaluate(n => n.open), false);
-        await page.locator('.mobile-section-jumps a[href="#monthly-section"]').click();
+        await page.locator('.mobile-view-link[data-view="monthly"]').click();
         assert(await page.locator('#cities').isHidden());
         assert(await page.locator('#mobile-realtime-strip').isVisible());
         await page.locator('[data-month-metric="good-share"]').click();
@@ -197,7 +201,7 @@ async function dragCity(page, from, to) {
           await page.locator('#select-all-cities').click();
           await page.locator('.mobile-sheet-close').click();
         }
-        await page.locator('.mobile-section-jumps a[href="#ecdf-section"]').click();
+        await page.locator('.mobile-view-link[data-view="stats"]').click();
         assert(await page.locator('#monthly-section').isHidden());
         assert(await page.locator('#mobile-realtime-strip').isVisible());
         await page.locator('#ecdf-legend button').first().click();
@@ -275,6 +279,12 @@ async function dragCity(page, from, to) {
         assert.equal(await page.locator('[data-calendar-view], .mobile-month-switch').count(), 0);
         await page.evaluate(() => scrollTo(0, 0));
         await page.screenshot({ path: path.join(output, `compare-${width}.png`) });
+        assert.equal(await page.locator('.site-navigation .site-tab:visible').count(), 5);
+        assert.equal(await page.locator('.site-navigation [aria-current="page"]:visible').innerText(), '对比');
+        await page.locator('.mobile-view-link[data-view="monthly"]').click();
+        await page.waitForFunction(() => document.documentElement.dataset.mobileCityView === 'monthly');
+        assert(await page.locator('#monthly-section').isVisible(), 'Bottom navigation opens the requested city view from comparison');
+        assert.equal(await page.locator('.site-navigation [aria-current="page"]:visible').innerText(), '月历');
       }
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       assert.equal(requests.filter(url => url.includes('/api/')).length, 0);

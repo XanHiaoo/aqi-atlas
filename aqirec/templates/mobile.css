@@ -1,6 +1,6 @@
 /* An independent, touch-first layout. Desktop visuals remain in site.css. */
 .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
-.mobile-section-jumps, .mobile-month-matrix, .mobile-realtime-strip { display: none; }
+.mobile-view-link, .mobile-month-matrix, .mobile-realtime-strip { display: none; }
 .mobile-city-sheet:not([open]) { display: none; }
 .mobile-day-popover { display: none; }
 .city-drag-handle, .city-sort-ghost { display: none; }
@@ -32,10 +32,9 @@
   .selected-values::-webkit-scrollbar { display: none; }
   .selected-values > span { scroll-snap-align: start; padding: 15px 16px 17px; min-height: 111px; font-size: 13px; border-radius: 15px; box-shadow: none; }
   .selected-values strong { font-size: 35px; line-height: 1.2; margin-top: 10px; }
-  .mobile-section-jumps { display: flex; align-items: center; gap: 7px; margin: 0 0 18px; padding: 4px; border-radius: 12px; background: #e9eff6; order: 4; }
-  .mobile-section-jumps a { display: flex; flex: 1; min-height: 42px; align-items: center; justify-content: center; text-decoration: none; border-radius: 9px; font-size: 13px; color: var(--muted); }
-  .mobile-section-jumps a.is-active { color: var(--ink); background: #fff; }
-  .mobile-section-jumps { order: 2; gap: 3px; }
+  .site-header .site-navigation { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 3px; padding-inline: max(8px,calc((100vw - 600px)/2)); }
+  .site-header .site-navigation .site-tab { flex-direction: column; gap: 4px; padding: 6px 2px; font-size: 11px; min-width: 0; white-space: nowrap; border-radius: 11px; }
+  .site-header .site-navigation .mobile-original-calendar { display: none; }
   .mobile-realtime-strip { display: flex; order: 3; align-items: center; gap: 12px; min-height: 34px; margin: -5px 0 16px; padding: 5px 0; border-bottom: 1px solid #e0e8f0; font-size: 11px; }
   .mobile-live-label { flex-shrink: 0; color: var(--muted); text-decoration: none; }
   .mobile-live-values { display: flex; align-items: center; gap: 16px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
@@ -237,7 +236,7 @@
 }
 @media print {
   .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
-  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix, .mobile-day-popover, .mobile-realtime-strip { display: none !important; }
+  .mobile-view-link, .mobile-city-sheet, .mobile-month-matrix, .mobile-day-popover, .mobile-realtime-strip { display: none !important; }
   html[data-mobile-city-view] #cities, html[data-mobile-city-view] #monthly-section, html[data-mobile-city-view] #ecdf-section { display: block; }
   html[data-mobile-city-view] #selected-comparison, html[data-mobile-city-view] #legend { display: flex; }
   .calendar-wrap, #delta-calendar > .calendar { display: block !important; }

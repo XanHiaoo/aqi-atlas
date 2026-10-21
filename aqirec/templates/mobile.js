@@ -162,7 +162,7 @@
     cityView=cityViews.some(row=>row[0]===view)?view:"calendar";
     document.documentElement.dataset.mobileCityView=cityView;
     closeDayPopover();
-    document.querySelectorAll(".mobile-section-jumps a").forEach(link=>{const active=link.dataset.view===cityView;link.classList.toggle("is-active",active);link.setAttribute("aria-current",active?"page":"false");});
+    document.querySelectorAll(".mobile-view-link").forEach(link=>{const active=link.dataset.view===cityView;link.classList.toggle("is-active",active);if(active)link.setAttribute("aria-current","page");else link.removeAttribute("aria-current");});
   }
   function realtime(){
     const strip=document.getElementById("mobile-realtime-strip"),values=document.getElementById("selected-values");if(!strip||!values)return;
@@ -176,20 +176,27 @@
     window.scrollTo({top:0,behavior:"instant"});
   }
   function restoreCityView(){showCityView(cityViews.find(row=>"#"+row[1]===location.hash)?.[0]||"calendar");}
+  function comparisonLabel(){const link=document.querySelector('.site-navigation [data-site-page="compare"]');for(const node of link?.childNodes||[])if(node.nodeType===Node.TEXT_NODE&&node.textContent.trim())node.textContent=media.matches?"对比":"差异对比";}
   function initialize(){
     setupPicker();
+    comparisonLabel();
     document.querySelectorAll("[data-mobile-city-picker]").forEach(link=>link.addEventListener("click",event=>{if(media.matches&&picker){event.preventDefault();openPicker();}}));
+    const navigation=document.querySelector(".site-navigation"),home=navigation.querySelector('[data-site-page="calendar"]'),isCityPage=Boolean(document.getElementById("report-data"));home.classList.add("mobile-original-calendar");
+    const icons=[
+      '<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16m-12 5h2m4 0h2"/>',
+      '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      '<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16M8 14h2m4 0h2m-8 3h2m4 0h2"/>',
+      '<path d="M4 20h17M7 16v-5m5 5V5m5 11V8"/>'
+    ];
+    cityViews.forEach(([view,id,label],index)=>{const link=make("a","site-tab mobile-view-link");link.dataset.view=view;const url=new URL(home.href);url.hash=id;link.href=url.href;link.innerHTML='<svg class="site-tab-icon" viewBox="0 0 24 24" aria-hidden="true">'+icons[index]+'</svg>';link.append(document.createTextNode(label));if(isCityPage)link.addEventListener("click",event=>{if(media.matches){event.preventDefault();navigateCityView(view);}});navigation.insertBefore(link,home);});
     if(document.getElementById("report-data")){
-      const jumps=make("nav","mobile-section-jumps");jumps.setAttribute("aria-label","城市视图");
-      for(const [view,id,label] of cityViews){const link=make("a","",label);link.href="#"+id;link.dataset.view=view;link.addEventListener("click",event=>{event.preventDefault();navigateCityView(view);});jumps.append(link);}
-      document.getElementById("selected-comparison").after(jumps);jumps.hidden=!document.querySelector("#cities .city");
-      const strip=make("div","mobile-realtime-strip");strip.id="mobile-realtime-strip";strip.setAttribute("aria-label","城市最新 AQI");jumps.before(strip);realtime();restoreCityView();
+      const strip=make("div","mobile-realtime-strip");strip.id="mobile-realtime-strip";strip.setAttribute("aria-label","城市最新 AQI");document.getElementById("selected-comparison").after(strip);realtime();restoreCityView();
       window.addEventListener("hashchange",restoreCityView);window.addEventListener("popstate",restoreCityView);
     }
     if(media.matches&&location.hash==="#city-picker")openPicker();
   }
-  media.addEventListener("change",()=>{sortFinish(false);setupPicker();refresh();});
-  function visibility(visible){document.querySelectorAll(".mobile-calendar-tools,.mobile-section-jumps,.mobile-realtime-strip").forEach(node=>node.hidden=!visible);}
+  media.addEventListener("change",()=>{sortFinish(false);setupPicker();comparisonLabel();refresh();});
+  function visibility(visible){document.querySelectorAll(".mobile-calendar-tools,.mobile-realtime-strip").forEach(node=>node.hidden=!visible);}
   window.aqiMobile={calendar,toolbar,visibility,monthMatrix,citySorting,realtime};
   document.addEventListener("DOMContentLoaded",initialize);
 })();

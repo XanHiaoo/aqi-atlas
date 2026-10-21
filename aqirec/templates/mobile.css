@@ -60,6 +60,10 @@
   .mobile-month-switch button:disabled { opacity: .35; }
   .mobile-month-switch select { padding: 6px 14px; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; }
   .mobile-calendar { display: block; min-width: 0; }
+  .mobile-calendar.is-year { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .mobile-calendar.is-year .mobile-month + .mobile-month { padding-top: 19px; border-top: 1px solid #edf1f6; }
+  .mobile-month { min-width: 0; }
+  .mobile-month-title { margin: 0 0 13px; color: var(--ink); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .mobile-weekdays, .mobile-day-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
   .mobile-weekdays { margin: 2px 0 9px; color: var(--muted); font-size: 11px; text-align: center; }
   .mobile-day-grid { row-gap: 6px; }
@@ -70,8 +74,7 @@
   .mobile-day:disabled { opacity: .35; }
   .mobile-day.is-selected { outline: 2px solid #246b9f; outline-offset: 1px; }
   .mobile-day-detail { min-height: 37px; padding-top: 12px; color: var(--muted); font-size: 11px; line-height: 1.8; font-variant-numeric: tabular-nums; }
-  html[data-mobile-calendar-view=month] .calendar-wrap, html[data-mobile-calendar-view=month] #delta-calendar > .calendar { display: none; }
-  html[data-mobile-calendar-view=year] .mobile-calendar { display: none; }
+  .calendar-wrap, #delta-calendar > .calendar { display: none; }
   .calendar-wrap, .calendar-scroll, .chart-scroll { overscroll-behavior-x: contain; scrollbar-width: thin; }
   .month-matrix-panel, .ecdf-panel, .panel { padding: 20px 15px; border-radius: 19px; box-shadow: none; }
   .month-matrix-panel { margin-top: 24px; }

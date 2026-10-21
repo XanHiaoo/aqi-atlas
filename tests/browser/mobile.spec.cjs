@@ -57,8 +57,25 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         assert(await page.locator('[data-month-prev]').isDisabled());
         assert(await firstCity.locator('.mobile-day').first().isDisabled(), 'Dates preceding the report range stay disabled');
         await page.locator('[data-calendar-view="year"]').click();
-        assert(await firstCity.locator('.calendar-wrap').isVisible());
-        assert(await firstCity.locator('.mobile-calendar').isHidden());
+        assert(await firstCity.locator('.calendar-wrap').isHidden());
+        const annual = firstCity.locator('.mobile-calendar');
+        assert(await annual.isVisible());
+        assert.equal(await annual.locator('.mobile-day:not(:disabled)').count(), 365, 'Annual month blocks preserve every day exactly once');
+        assert(await annual.evaluate(n => n.scrollWidth <= n.clientWidth), 'Annual calendar fits the phone without horizontal scrolling');
+        const monthBlocks = await annual.locator('.mobile-month').all();
+        assert.equal(monthBlocks.length, await month.locator('option').count());
+        for (let i = 1; i < monthBlocks.length; i++) {
+          const previous = await monthBlocks[i - 1].boundingBox(), current = await monthBlocks[i].boundingBox();
+          assert(current.y >= previous.y + previous.height, 'Annual months flow vertically');
+        }
+        const annualDay = annual.locator('.mobile-day:not(:disabled)').first();
+        await annualDay.click();
+        const annualDate = await annualDay.getAttribute('data-mobile-date');
+        assert.equal(await annual.locator('.mobile-day-detail:visible').count(), 1);
+        assert((await annual.locator('.mobile-day-detail:visible').innerText()).includes(annualDate.replaceAll('-', '.')));
+        const yearValuesMatch = await firstCity.evaluate(city => [...city.querySelectorAll('.mobile-day:not(:disabled)')].every(day => getComputedStyle(day).backgroundColor === getComputedStyle(city.querySelector(`.calendar [data-date="${day.dataset.mobileDate}"]`)).fill));
+        assert(yearValuesMatch, 'Every annual day retains the original AQI palette');
+        await monthBlocks[0].screenshot({ path: path.join(output, `year-month-${width}.png`) });
         await page.locator('[data-calendar-view="month"]').click();
         await month.selectOption(report.end_date.slice(0, 7));
         assert(await page.locator('[data-month-next]').isDisabled());
@@ -123,6 +140,16 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         assert((await page.locator('#date-detail').innerText()).startsWith(date));
         const preservedFill = await page.evaluate(date => getComputedStyle(document.querySelector(`#delta-calendar [data-mobile-date="${date}"]`)).backgroundColor === getComputedStyle(document.querySelector(`#delta-calendar .calendar [data-date="${date}"]`)).fill, date);
         assert(preservedFill, 'Differences retain the shared diverging scale');
+        await page.locator('[data-calendar-view="year"]').click();
+        const annual = page.locator('#delta-calendar .mobile-calendar');
+        assert(await page.locator('#delta-calendar > .calendar').isHidden());
+        assert.equal(await annual.locator('.mobile-day:not(:disabled)').count(), 365);
+        assert(await annual.evaluate(n => n.scrollWidth <= n.clientWidth));
+        await annual.locator('.mobile-day:not(:disabled)').first().click();
+        const annualDate = await annual.locator('.mobile-day.is-selected').getAttribute('data-mobile-date');
+        assert((await page.locator('#date-detail').innerText()).startsWith(annualDate));
+        assert.equal(await annual.locator('.mobile-day-detail:visible').count(), 1);
+        await page.locator('[data-calendar-view="month"]').click();
         await page.evaluate(() => scrollTo(0, 0));
         await page.screenshot({ path: path.join(output, `compare-${width}.png`) });
       }

@@ -18,15 +18,18 @@
     state.date=date;
     for(const [node,entry] of connected()){
       node.querySelectorAll("[data-mobile-date]").forEach(button=>{const active=button.dataset.mobileDate===date;button.classList.toggle("is-selected",active);button.setAttribute("aria-pressed",String(active));});
-      const detail=node.querySelector(".mobile-day-detail");if(detail)detail.textContent=entry.options.describe(entry.rows.get(date),date);
+      node.querySelectorAll(".mobile-day-detail").forEach(detail=>{detail.textContent=entry.options.describe(entry.rows.get(date),date);detail.hidden=state.view==="year"&&detail.dataset.month!==date.slice(0,7);});
     }
     callback?.(date);
   }
   function paint(node,entry){
     if(!media.matches)return;
-    const {options,rows}=entry;node.replaceChildren();node.setAttribute("aria-label",options.label+" "+state.month.replace("-",".")+" 月历");
-    const weekdays=make("div","mobile-weekdays");for(const label of["一","二","三","四","五","六","日"])weekdays.append(make("span","",label));node.append(weekdays);
-    const grid=make("div","mobile-day-grid"),[year,month]=state.month.split("-").map(Number),first=new Date(Date.UTC(year,month-1,1)),count=new Date(Date.UTC(year,month,0)).getUTCDate();
+    const {options,rows}=entry;node.replaceChildren();node.classList.toggle("is-year",state.view==="year");node.setAttribute("aria-label",options.label+" "+(state.view==="year"?"全年日历":state.month.replace("-",".")+" 月历"));
+    for(const monthKey of state.view==="year"?months:[state.month]){
+    const panel=make("section","mobile-month");panel.dataset.month=monthKey;
+    if(state.view==="year")panel.append(make("h3","mobile-month-title",monthKey.replace("-",".")));
+    const weekdays=make("div","mobile-weekdays");for(const label of["一","二","三","四","五","六","日"])weekdays.append(make("span","",label));panel.append(weekdays);
+    const grid=make("div","mobile-day-grid"),[year,month]=monthKey.split("-").map(Number),first=new Date(Date.UTC(year,month-1,1)),count=new Date(Date.UTC(year,month,0)).getUTCDate();
     for(let i=0;i<(first.getUTCDay()+6)%7;i++){const blank=make("span","mobile-day-blank");blank.setAttribute("aria-hidden","true");grid.append(blank);}
     for(let day=1;day<=count;day++){
       const date=iso(new Date(Date.UTC(year,month-1,day))),row=rows.get(date),value=options.getValue(row),button=make("button","mobile-day");button.type="button";button.dataset.mobileDate=date;
@@ -38,8 +41,10 @@
       button.addEventListener("keydown",event=>{const move={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[event.key];if(move){event.preventDefault();const key=iso(new Date(Date.UTC(year,month-1,day+move)));node.querySelector(`[data-mobile-date="${key}"]:not(:disabled)`)?.focus();}});
       grid.append(button);
     }
-    node.append(grid);
-    if(options.showDetail!==false){const detail=make("div","mobile-day-detail",options.describe(rows.get(state.date),state.date));detail.setAttribute("role","status");node.append(detail);}
+    panel.append(grid);
+    if(options.showDetail!==false||state.view==="year"){const detail=make("div","mobile-day-detail",options.describe(rows.get(state.date),state.date));detail.dataset.month=monthKey;detail.hidden=state.view==="year"&&monthKey!==state.date.slice(0,7);detail.setAttribute("role","status");panel.append(detail);}
+    node.append(panel);
+    }
   }
   function refresh(){
     document.documentElement.dataset.mobileCalendarView=state.view;

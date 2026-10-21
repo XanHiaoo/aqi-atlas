@@ -7,7 +7,7 @@
   <view class="meta-row"><text class="period">● {{period}}</text><view class="manage-link" bindtap="openManager">☰ 管理城市</view></view>
   <view class="source-line">AQI.in · AQI-US</view>
   <view wx:if="{{mode !== 'realtime' && !empty}}" class="live-strip"><text class="live-label" bindtap="goRealtime">{{liveLabel}}</text><scroll-view scroll-x class="live-scroll" show-scrollbar="{{false}}"><view class="live-inline"><view wx:for="{{live}}" wx:key="key" class="live-item"><text>{{item.name}}</text><text class="live-number" style="color:{{item.color}}">{{item.value}}{{item.stale ? '*' : ''}}</text></view></view></scroll-view></view>
-  <view wx:if="{{error}}" class="data-status">{{error}}。当前显示已保存数据。<text bindtap="onPullDownRefresh" class="retry">重试</text></view>
+  <view wx:if="{{error}}" class="data-status">{{error}}。更新失败的数据保留上次结果。<text bindtap="onPullDownRefresh" class="retry">重试</text></view>
   <view wx:if="{{busy}}" class="loading-line">正在更新数据…</view>
   <view wx:if="{{empty && mode !== 'compare'}}" class="empty-state"><view>尚未选择城市</view><text>点击“管理城市”选择城市开始对比。</text></view>
   <block wx:if="{{mode === 'calendar' && !empty}}">

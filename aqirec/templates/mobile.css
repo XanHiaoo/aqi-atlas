@@ -2,7 +2,7 @@
 .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
 .mobile-section-jumps, .mobile-month-matrix { display: none; }
 .mobile-city-sheet:not([open]) { display: none; }
-.mobile-month-popover { display: none; }
+.mobile-day-popover { display: none; }
 @media (max-width: 767px), (max-width: 960px) and (pointer: coarse) {
   :root { --mobile-paper: #f4f7fb; --mobile-header-height: 64px; }
   html { scroll-padding-top: 80px; }
@@ -64,14 +64,12 @@
   .mobile-mini-day.is-outside { opacity: .18; }
   .mobile-mini-day.is-selected { outline: 1px solid #246b9f; outline-offset: 1px; }
   .mobile-month-title { margin: 0 0 6px; color: var(--ink); font-size: 11px; line-height: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .mobile-day-detail { min-height: 37px; padding-top: 12px; color: var(--muted); font-size: 11px; line-height: 1.8; font-variant-numeric: tabular-nums; }
   .city .mobile-year-grid { gap: 6px 8px; }
   .city .mobile-year-month { padding: 0; }
   .city .mobile-month-title { font-size: 10px; line-height: 12px; margin-bottom: 3px; }
   .city .mobile-mini-weekdays { line-height: 7px; margin-bottom: 3px; }
   .city .mobile-mini-grid { grid-template-rows: repeat(6, var(--mobile-city-day)); row-gap: 1px; }
   .city .mobile-mini-day, .city .mobile-mini-blank { height: var(--mobile-city-day); }
-  .city .mobile-day-detail { min-height: 28px; padding-top: 7px; font-size: 10px; line-height: 1.5; }
   .calendar-wrap, #delta-calendar > .calendar { display: none; }
   .calendar-wrap, .calendar-scroll, .chart-scroll { overscroll-behavior-x: contain; scrollbar-width: thin; }
   .month-matrix-panel, .ecdf-panel, .panel { padding: 20px 15px; border-radius: 19px; box-shadow: none; }
@@ -94,14 +92,14 @@
   .mobile-month-table th:first-child { width: 50px; color: var(--muted); font-size: 9px; }
   .mobile-month-table td { padding: 0; }
   .mobile-month-table .month-matrix-cell { min-height: 49px; gap: 4px; padding: 6px 2px; }
+  .mobile-month-table .month-matrix-cell:hover { outline: none; }
   .mobile-month-table .month-matrix-cell strong { font-size: 13px; }
   .mobile-month-table .month-matrix-cell small { font-size: 8px; }
-  .mobile-month-table .month-matrix-cell.is-selected { outline: 2px solid #2879b4; outline-offset: 0; }
-  .mobile-month-popover:popover-open { display: block; position: fixed; inset: auto; margin: 0; width: min(320px, calc(100vw - 24px)); padding: 14px 16px; border: 1px solid #c6daeb; border-radius: 14px; background: #f7fbff; color: var(--muted); box-shadow: none; overflow-y: auto; }
-  .mobile-month-popover-copy { display: flex; flex-direction: column; gap: 6px; font-size: 11px; line-height: 1.6; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-  .mobile-month-popover-title { padding-right: 34px; color: var(--ink); font-size: 13px; font-weight: 600; }
-  .mobile-month-popover-value { color: var(--ink); font-size: 12px; }
-  .mobile-month-popover-close { position: absolute; top: 2px; right: 2px; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 22px; }
+  .mobile-day-popover:popover-open { display: block; position: fixed; inset: auto; margin: 0; width: min(320px, calc(100vw - 24px)); padding: 14px 16px; border: 1px solid #c6daeb; border-radius: 14px; background: #f7fbff; color: var(--muted); box-shadow: none; overflow-y: auto; }
+  .mobile-day-popover-copy { display: flex; flex-direction: column; gap: 6px; font-size: 11px; line-height: 1.6; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .mobile-day-popover-title { padding-right: 34px; color: var(--ink); font-size: 13px; font-weight: 600; }
+  .mobile-day-popover-value { color: var(--ink); font-size: 12px; }
+  .mobile-day-popover-close { position: absolute; top: 2px; right: 2px; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 22px; }
   .ecdf-panel { margin-top: 24px; }
   .ecdf-heading { gap: 12px; }
   .ecdf-heading button { min-height: 42px; }
@@ -147,7 +145,7 @@
   #delta-calendar .mobile-calendar-title { display: none; }
   #delta-calendar .mobile-calendar-heading { justify-content: flex-end; }
   #delta-calendar .mobile-calendar-tools { margin-bottom: 19px; }
-  .date-detail { gap: 8px 13px; padding: 13px; font-size: 11px; border-radius: 11px; }
+  .date-detail { display: none; }
   .key { gap: 10px; font-size: 10px; }
   .gradient-key { flex-wrap: wrap; gap: 5px; }
   .ramp { width: 100px; }
@@ -213,7 +211,8 @@
 }
 @media print {
   .mobile-city-link, .site-tab-icon, .mobile-calendar-tools, .mobile-calendar,
-  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix, .mobile-month-popover { display: none !important; }
+  .mobile-section-jumps, .mobile-city-sheet, .mobile-month-matrix, .mobile-day-popover { display: none !important; }
   .calendar-wrap, #delta-calendar > .calendar { display: block !important; }
   .month-matrix-scroll, #month-matrix-detail { display: block !important; }
+  .date-detail { display: flex !important; }
 }

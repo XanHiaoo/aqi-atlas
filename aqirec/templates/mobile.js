@@ -12,11 +12,11 @@
     state.date=date;
     for(const [node,entry] of connected()){
       node.querySelectorAll("[data-mobile-date]").forEach(button=>{const active=button.dataset.mobileDate===date;button.classList.toggle("is-selected",active);button.setAttribute("aria-pressed",String(active));button.tabIndex=active?0:-1;});
-      node.querySelectorAll(".mobile-day-detail").forEach(detail=>{detail.textContent=entry.options.describe(entry.rows.get(date),date);});
     }
     callback?.(date);
   }
   function paint(node,entry){
+    closeDayPopover();
     if(!media.matches)return;
     node.replaceChildren();node.setAttribute("aria-label",entry.options.label+" 全年日历");
     const {options,rows}=entry,overview=make("div","mobile-year-grid");
@@ -28,37 +28,37 @@
       for(let i=0;i<offset;i++)grid.append(make("span","mobile-mini-blank"));
       for(let day=1;day<=count;day++){
         const date=iso(new Date(Date.UTC(year,month-1,day))),row=rows.get(date),value=options.getValue(row),cell=make("button","mobile-mini-day"),inRange=date>=source.start_date&&date<=source.end_date;cell.type="button";cell.disabled=!inRange;cell.dataset.mobileDate=date;cell.dataset.inRange=String(inRange);cell.title=options.describe(row,date);cell.setAttribute("aria-label",cell.title);cell.setAttribute("aria-pressed",String(date===state.date));cell.tabIndex=date===state.date?0:-1;cell.classList.toggle("is-selected",date===state.date);cell.classList.toggle("is-outside",!inRange);
-        cell.addEventListener("click",()=>selectDate(date,options.onSelect));
-        cell.addEventListener("keydown",event=>{const move={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[event.key];if(move){event.preventDefault();const key=iso(new Date(Date.UTC(year,month-1,day+move))),target=node.querySelector(`[data-mobile-date="${key}"]:not(:disabled)`);if(target){selectDate(key,options.onSelect);target.focus();}}});
+        cell.setAttribute("aria-haspopup","dialog");cell.setAttribute("aria-controls","mobile-day-popover");cell.setAttribute("aria-expanded","false");
+        cell.addEventListener("click",()=>{selectDate(date,options.onSelect);showDayPopover(cell,entry,date);});
+        cell.addEventListener("keydown",event=>{const move={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[event.key];if(move){event.preventDefault();const key=iso(new Date(Date.UTC(year,month-1,day+move))),target=node.querySelector(`[data-mobile-date="${key}"]:not(:disabled)`);if(target){selectDate(key,options.onSelect);target.focus();showDayPopover(target,entry,key);}}});
         if(Number.isFinite(value))cell.style.background=options.color(value);else cell.classList.add("is-missing");grid.append(cell);
       }
       panel.append(grid);overview.append(panel);
     }
     node.append(overview);
-    if(options.showDetail!==false){const detail=make("div","mobile-day-detail",options.describe(rows.get(state.date),state.date));detail.setAttribute("role","status");node.append(detail);}
   }
   let matrixSource=null;
-  let monthPopover=null,monthAnchor=null;
-  function clearMonthAnchor(){if(monthAnchor){monthAnchor.classList.remove("is-selected");monthAnchor.setAttribute("aria-expanded","false");monthAnchor=null;}}
-  function closeMonthPopover(){if(monthPopover?.matches(":popover-open"))monthPopover.hidePopover();clearMonthAnchor();}
-  function ensureMonthPopover(){
-    if(monthPopover)return;
-    monthPopover=make("div","mobile-month-popover");monthPopover.id="mobile-month-popover";monthPopover.setAttribute("popover","auto");monthPopover.setAttribute("role","dialog");monthPopover.setAttribute("aria-label","月度统计详情");
-    const copy=make("div","mobile-month-popover-copy"),close=make("button","mobile-month-popover-close","×");close.type="button";close.setAttribute("aria-label","关闭详情");close.addEventListener("click",closeMonthPopover);monthPopover.append(copy,close);document.body.append(monthPopover);
-    monthPopover.addEventListener("toggle",()=>{if(!monthPopover.matches(":popover-open"))clearMonthAnchor();});
-    document.addEventListener("scroll",event=>{if(!monthPopover.contains(event.target))closeMonthPopover();},{capture:true,passive:true});window.addEventListener("resize",closeMonthPopover);
+  let dayPopover=null,dayAnchor=null;
+  function clearDayAnchor(){if(dayAnchor){dayAnchor.setAttribute("aria-expanded","false");dayAnchor=null;}}
+  function closeDayPopover(){if(dayPopover?.matches(":popover-open"))dayPopover.hidePopover();clearDayAnchor();}
+  function ensureDayPopover(){
+    if(dayPopover)return;
+    dayPopover=make("div","mobile-day-popover");dayPopover.id="mobile-day-popover";dayPopover.setAttribute("popover","auto");dayPopover.setAttribute("role","dialog");dayPopover.setAttribute("aria-label","当日空气质量");
+    const copy=make("div","mobile-day-popover-copy"),close=make("button","mobile-day-popover-close","×");close.type="button";close.setAttribute("aria-label","关闭详情");close.addEventListener("click",closeDayPopover);dayPopover.append(copy,close);document.body.append(dayPopover);
+    dayPopover.addEventListener("toggle",()=>{if(!dayPopover.matches(":popover-open"))clearDayAnchor();});
+    document.addEventListener("scroll",event=>{if(!dayPopover.contains(event.target))closeDayPopover();},{capture:true,passive:true});window.addEventListener("resize",closeDayPopover);
   }
-  function showMonthPopover(button,detail){
-    ensureMonthPopover();if(monthAnchor===button&&monthPopover.matches(":popover-open")){closeMonthPopover();return;}closeMonthPopover();
-    const parts=detail.split(" · "),copy=monthPopover.querySelector(".mobile-month-popover-copy");copy.replaceChildren();copy.append(make("strong","mobile-month-popover-title",parts.splice(0,2).join(" · ")),make("span","mobile-month-popover-value",parts[0].replace(/（[^）]*）$/,"")));
-    monthAnchor=button;button.classList.add("is-selected");button.setAttribute("aria-expanded","true");monthPopover.showPopover();
+  function showDayPopover(button,entry,date){
+    ensureDayPopover();if(dayAnchor===button&&dayPopover.matches(":popover-open")){closeDayPopover();return;}closeDayPopover();
+    const formatted=date.replaceAll("-","."),parts=entry.options.describe(entry.rows.get(date),date).split(" · "),copy=dayPopover.querySelector(".mobile-day-popover-copy");copy.replaceChildren();copy.append(make("strong","mobile-day-popover-title",entry.options.label+" · "+formatted));parts.slice(parts.indexOf(formatted)+1).forEach((part,index)=>copy.append(make("span",index===0?"mobile-day-popover-value":"",part)));
+    dayAnchor=button;button.setAttribute("aria-expanded","true");dayPopover.showPopover();
     const rect=button.getBoundingClientRect(),top=document.querySelector(".site-header").getBoundingClientRect().bottom+8,bottom=innerHeight-document.querySelector(".site-navigation").offsetHeight-8;
-    monthPopover.style.maxHeight=Math.max(100,bottom-top)+"px";
-    const height=monthPopover.offsetHeight,width=monthPopover.offsetWidth,y=rect.top-height-10>=top?rect.top-height-10:rect.bottom+10+height<=bottom?rect.bottom+10:Math.max(top,Math.min(rect.top,bottom-height));
-    monthPopover.style.top=y+"px";monthPopover.style.left=Math.max(12,Math.min(rect.left+rect.width/2-width/2,innerWidth-width-12))+"px";
+    dayPopover.style.maxHeight=Math.max(100,bottom-top)+"px";
+    const height=dayPopover.offsetHeight,width=dayPopover.offsetWidth,y=rect.top-height-10>=top?rect.top-height-10:rect.bottom+10+height<=bottom?rect.bottom+10:Math.max(top,Math.min(rect.top,bottom-height));
+    dayPopover.style.top=y+"px";dayPopover.style.left=Math.max(12,Math.min(rect.left+rect.width/2-width/2,innerWidth-width-12))+"px";
   }
   function paintMonthMatrix(){
-    closeMonthPopover();
+    closeDayPopover();
     if(!matrixSource||!media.matches)return;
     let output=document.getElementById("mobile-month-matrix");
     if(!output){output=make("div","mobile-month-matrix");output.id="mobile-month-matrix";matrixSource.closest(".month-matrix-scroll").after(output);}
@@ -71,13 +71,7 @@
       labels.forEach((label,monthIndex)=>{
         const row=make("tr",""),month=make("th","",label);month.scope="row";row.dataset.month=cities[0].cells[monthIndex+1].firstElementChild.dataset.month;row.append(month);
         for(const city of cities){
-          const original=city.cells[monthIndex+1].firstElementChild,cell=make("td",""),button=original.cloneNode(true);button.dataset.mobileMonthCell="";button.setAttribute("aria-haspopup","dialog");button.setAttribute("aria-controls","mobile-month-popover");button.setAttribute("aria-expanded","false");
-          const show=()=>{
-            document.getElementById("month-matrix-detail").textContent=original.title;
-            showMonthPopover(button,original.title);
-          };
-          button.addEventListener("click",show);button.addEventListener("focus",()=>{if(button.matches(":focus-visible"))show();});
-          button.addEventListener("keydown",event=>{const move={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];if(move){event.preventDefault();table.querySelector(`[data-city-index="${Number(button.dataset.cityIndex)+move[0]}"][data-month-index="${monthIndex+move[1]}"]`)?.focus();}});
+          const original=city.cells[monthIndex+1].firstElementChild,cell=make("td",""),button=make("div",original.className);button.dataset.mobileMonthCell="";button.dataset.city=original.dataset.city;button.dataset.month=original.dataset.month;button.dataset.detail=original.title;button.style.cssText=original.style.cssText;button.setAttribute("role","img");button.setAttribute("aria-label",original.getAttribute("aria-label"));button.append(...[...original.childNodes].map(node=>node.cloneNode(true)));
           cell.append(button);row.append(cell);
         }
         body.append(row);
@@ -98,7 +92,7 @@
   function calendar(options){const node=make("div","mobile-calendar");const entry={options,rows:new Map(options.days.map(row=>[row.date,row]))};entries.set(node,entry);paint(node,entry);queueMicrotask(connected);return node;}
   let sheet=null,placeholder=null,picker=null;
   function closePicker(){if(sheet?.open)sheet.close();}
-  function openPicker(){if(!sheet)return;sheet.showModal();document.documentElement.classList.add("mobile-sheet-open");sheet.querySelector(".mobile-sheet-close").focus();}
+  function openPicker(){if(!sheet)return;closeDayPopover();sheet.showModal();document.documentElement.classList.add("mobile-sheet-open");sheet.querySelector(".mobile-sheet-close").focus();}
   function setupPicker(){
     if(!picker)picker=document.getElementById("city-picker");if(!picker)return;
     if(media.matches){

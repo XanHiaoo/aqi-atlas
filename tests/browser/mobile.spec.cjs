@@ -56,13 +56,31 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         await annual.screenshot({ path: path.join(output, `year-overview-${width}.png`) });
         const annualDay = annual.locator('.mobile-mini-day[data-in-range="true"]').first();
         const annualDate = await annualDay.getAttribute('data-mobile-date');
+        const cityHeight = await firstCity.evaluate(node => node.offsetHeight);
         await annualDay.click();
         assert.equal(await annual.locator('.mobile-mini-day:not(:disabled)').count(), 365, 'Day selection keeps the whole year visible');
-        assert.equal(await annual.locator('.mobile-day-detail:visible').count(), 1);
-        assert((await annual.locator('.mobile-day-detail:visible').innerText()).includes(annualDate.replaceAll('-', '.')));
+        const popover = page.locator('#mobile-day-popover');
+        assert(await popover.isVisible());
+        assert.equal((await popover.locator('.mobile-day-popover-copy > *').allTextContents()).join(' · '), await annualDay.getAttribute('title'));
+        assert.equal(await firstCity.evaluate(node => node.offsetHeight), cityHeight, 'Daily details float without changing the annual layout');
+        assert.equal(await annual.locator('.mobile-day-detail').count(), 0);
         assert.equal(await page.locator('.mobile-mini-day.is-selected').count(), selected.length);
         const value = city.days.find(d => d.date === annualDate)?.mean;
-        assert((await annual.locator('.mobile-day-detail').innerText()).includes(value == null ? '数据缺失' : value.toFixed(1)));
+        assert((await popover.innerText()).includes(value == null ? '数据缺失' : value.toFixed(1)));
+        const popupBounds = await popover.boundingBox(), headerBounds = await page.locator('.site-header').boundingBox(), navBounds = await page.locator('.site-navigation').boundingBox();
+        assert(popupBounds.x >= 0 && popupBounds.x + popupBounds.width <= width);
+        assert(popupBounds.y >= headerBounds.y + headerBounds.height && popupBounds.y + popupBounds.height <= navBounds.y);
+        await page.screenshot({ path: path.join(output, `daily-popover-${width}-${height}.png`) });
+        await popover.locator('.mobile-day-popover-close').click();
+        assert(await popover.isHidden());
+        assert.equal(await annualDay.getAttribute('aria-expanded'), 'false');
+        assert(await annualDay.evaluate(node => node.classList.contains('is-selected')));
+        await annualDay.click();
+        await page.keyboard.press('Escape');
+        assert(await popover.isHidden());
+        await annualDay.click();
+        await page.mouse.click(5, 5);
+        assert(await popover.isHidden(), 'A tap outside dismisses daily details');
         const citySizes = await page.locator('#cities .city').evaluateAll(cities => {
           const budget = innerHeight - document.querySelector('.site-header').offsetHeight - document.querySelector('.site-navigation').offsetHeight - 20;
           return cities.map(city => ({ name: city.querySelector('h2').textContent, height: city.getBoundingClientRect().height, budget }));
@@ -73,6 +91,7 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         await annualDay.press('ArrowRight');
         const nextDate = new Date(Date.parse(annualDate) + 86400000).toISOString().slice(0, 10);
         assert.equal(await annual.locator('.mobile-mini-day.is-selected').getAttribute('data-mobile-date'), nextDate);
+        assert((await popover.innerText()).includes(nextDate.replaceAll('-', '.')));
 
         await page.locator('[data-mobile-city-picker]').click();
         assert(await page.locator('dialog').evaluate(n => n.open));
@@ -106,33 +125,22 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
           assert.equal(await group.locator('tbody tr[data-month]').count(), monthBlocks.length);
           assert(await group.locator('thead th').count() <= 4);
         }
-        const snapshot = selector => page.locator(selector).evaluateAll(buttons => buttons.map(button => ({
+        const snapshot = selector => page.locator(selector).evaluateAll(buttons => {
+          const context = document.createElement('canvas').getContext('2d');
+          return buttons.map(button => ({
           key: button.dataset.city + '/' + button.dataset.month,
           value: button.querySelector('strong').textContent,
           count: button.querySelector('small').textContent,
-          fill: getComputedStyle(button).backgroundColor,
-          detail: button.title,
-        })).sort((a, b) => a.key.localeCompare(b.key)));
+          fill: (() => { context.fillStyle = getComputedStyle(button).backgroundColor; context.fillRect(0, 0, 1, 1); return Array.from(context.getImageData(0, 0, 1, 1).data); })(),
+          detail: button.dataset.detail || button.title,
+        })).sort((a, b) => a.key.localeCompare(b.key)); });
         assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'), 'Mobile months preserve every statistic, valid-day count, color and detail');
         const monthlyCell = monthly.locator('[data-mobile-month-cell]').nth(4);
         const matrixHeight = await monthly.evaluate(node => node.offsetHeight);
         await monthlyCell.click();
-        const popover = page.locator('#mobile-month-popover');
-        assert(await popover.isVisible());
-        assert.equal((await popover.locator('.mobile-month-popover-copy > *').allTextContents()).join(' · '), (await monthlyCell.getAttribute('title')).split(' · ').slice(0, 3).join(' · ').replace(/（[^）]*）$/, ''));
-        assert.equal(await monthly.evaluate(node => node.offsetHeight), matrixHeight, 'Details float without moving table rows');
-        const popupBounds = await popover.boundingBox(), headerBounds = await page.locator('.site-header').boundingBox(), navBounds = await page.locator('.site-navigation').boundingBox();
-        assert(popupBounds.x >= 0 && popupBounds.x + popupBounds.width <= width);
-        assert(popupBounds.y >= headerBounds.y + headerBounds.height && popupBounds.y + popupBounds.height <= navBounds.y);
-        await popover.locator('.mobile-month-popover-close').click();
+        assert.equal(await monthly.evaluate(node => node.offsetHeight), matrixHeight);
         assert(await popover.isHidden());
-        assert.equal(await monthlyCell.getAttribute('aria-expanded'), 'false');
-        await monthlyCell.click();
-        await page.keyboard.press('Escape');
-        assert(await popover.isHidden());
-        await monthlyCell.click();
-        await page.mouse.click(5, 5);
-        assert(await popover.isHidden(), 'A tap outside dismisses the floating details');
+        assert.equal(await monthly.locator('button,[aria-haspopup]').count(), 0, 'Monthly values have no popover interaction');
         await page.locator('[data-month-metric="median"]').click();
         assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'));
         assert(await monthly.evaluate(n => n.scrollWidth <= n.clientWidth));
@@ -171,7 +179,8 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         const day = page.locator('#delta-calendar .mobile-mini-day:not(:disabled)').first();
         await day.click();
         const date = await day.getAttribute('data-mobile-date');
-        assert((await page.locator('#date-detail').innerText()).startsWith(date));
+        assert(await page.locator('#date-detail').isHidden());
+        assert((await page.locator('#mobile-day-popover').innerText()).includes(date.replaceAll('-', '.')));
         const preservedFill = await page.evaluate(date => getComputedStyle(document.querySelector(`#delta-calendar [data-mobile-date="${date}"]`)).backgroundColor === getComputedStyle(document.querySelector(`#delta-calendar .calendar [data-date="${date}"]`)).fill, date);
         assert(preservedFill, 'Differences retain the shared diverging scale');
         const annual = page.locator('#delta-calendar .mobile-calendar');

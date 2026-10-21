@@ -45,7 +45,6 @@
   <div class="selected" id="selected-comparison" aria-live="polite" aria-atomic="true"><span class="selected-date" id="selected-date"></span><div class="selected-values" id="selected-values"></div></div>
   <div class="empty-state" id="empty-state" hidden><h2>尚未选择城市</h2><p>勾选上方城市即可查看日历，也可以点击“全选”恢复对比。</p></div>
   <div id="cities"></div>
-  <div class="hint" id="calendar-hint">每格代表一天，周一至周日自上而下排列，时间从去年向今年连续展开。悬停查看详情，点击或按 Enter 对比同一天；灰色为缺失，虚线框为今日暂定值。小屏可横向滚动日历。</div>
   <section class="month-matrix-panel" id="monthly-section" aria-labelledby="month-matrix-title">
     <div class="month-matrix-heading"><h2 id="month-matrix-title">城市 × 月份</h2><div class="month-matrix-metrics" role="group" aria-label="月度统计指标"><button type="button" data-month-metric="median" aria-pressed="true">月度 AQI 中位数</button><button type="button" data-month-metric="good-share" aria-pressed="false">良好日占比</button></div></div>
     <div class="month-matrix-options" hidden><label><input id="month-common-days" type="checkbox" checked>仅用共同有效日期</label><span id="month-matrix-coverage"></span></div>
@@ -438,7 +437,7 @@ function render(){
   orderCityPicker(cities);
   byId("selection-status").textContent=`已选 ${cities.length} / ${report.cities.length}`;
   byId("select-all-cities").disabled=cities.length===report.cities.length;byId("clear-cities").disabled=empty;
-  byId("empty-state").hidden=!empty;byId("selected-comparison").hidden=empty;byId("ecdf-section").hidden=empty;byId("calendar-hint").hidden=empty;
+  byId("empty-state").hidden=!empty;byId("selected-comparison").hidden=empty;byId("ecdf-section").hidden=empty;
   byId("empty-state").querySelector("h2").textContent=report.cities.length?"尚未选择城市":"尚未添加城市";
   byId("empty-state").querySelector("p").textContent=report.cities.length?"勾选上方城市即可查看日历，也可以点击“全选”恢复对比。":"搜索城市并添加，即可查看过去一年的美标 AQI。";
   byId("city-subtitle").textContent=(empty?"选择城市开始对比":cities.map(city=>city.name).join("、"))+" · 美标 AQI 日历热力图";
@@ -456,7 +455,6 @@ byId("period").textContent=`${report.start_date.replaceAll("-",".")} - ${report.
   byId("method-note").textContent=`统计区间：${report.start_date} 至 ${report.end_date}（含起止日，共 ${report.expected_days} 天）。日期沿用平台标签，缺失值不填补、不参与统计。`;
   byId("daily-note").textContent="实时数据：平台城市级最新 AQI 独立展示，不计入历史日值及汇总统计。";
   byId("source-credit").textContent="数据归属 "+report.provider+" · 美标 · 个人研究对照";
-  byId("calendar-hint").textContent="每格代表平台发布日期，周一至周日自上而下排列。悬停查看日值，点击定位同一日期；灰色为未取得历史值。小屏可横向滚动日历。";
 byId("generated").textContent="生成于 "+report.generated_at.replace("T"," ").replace("+08:00","")+" 北京时间";
 window.addEventListener("scroll",hideTooltip,{passive:true});
 byId("select-all-cities").addEventListener("click",()=>changeSelection([...selectedCityKeys,...report.cities.map(city=>city.key)]));

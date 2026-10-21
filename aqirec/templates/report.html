@@ -68,13 +68,11 @@
     <div class="ecdf-gap" id="ecdf-gap" hidden></div>
   </section>
   <details class="notes"><summary id="source-summary">数据来源与口径</summary><ul>
-    <li id="quality-note" hidden></li>
     <li id="source-note">数据来源：AQI.in 官方日历接口。</li>
     <li id="index-note">指标口径：AQI-US，采用平台发布的逐日 AQI。</li>
     <li id="method-note"></li>
     <li id="daily-note">实时数据独立展示，不计入历史统计。</li>
     <li id="summary-note">期间及月度均值按有效日等权计算，缺失值不参与统计。</li>
-    <li id="coordinates"></li>
   </ul></details>
   <footer class="footer"><span id="source-credit">数据归属 AQI.in · 美标 · 个人研究对照</span><span id="generated"></span></footer>
   <noscript>请启用 JavaScript 查看热力图；完整数据也保存在同目录的 daily.csv、summary.csv、monthly.csv 和 report.json 中。</noscript>
@@ -452,10 +450,7 @@ function render(){
   byId("cities").replaceChildren(...cities.map(cityPanel));drawLegend();drawMonthMatrix();drawECDF();selectDate(selectedDate);renderRealtime();
   window.aqiMobile.visibility(!empty);
   window.aqiSite.setCalendarSelection(cities.map(city=>city.key));
-  if(report.validation){const notice=byId("quality-note");notice.hidden=empty;notice.replaceChildren();
-    const link=document.createElement("a");link.href=report.validation.audit_file;link.textContent="来源与覆盖范围 →";notice.append(link);}
   byId("summary-note").textContent="统计方法：期间及月度均值按有效日等权计算；AQI≤100 比例以有效日数为分母，跨年月份按年分别统计。"+(cities.some(city=>city.summary.mean.missing_days)?"各城有效日数见统计卡片。":"");
-  byId("coordinates").replaceChildren(document.createTextNode("平台原始页面："));for(const city of cities){const link=document.createElement("a");link.href=city.provenance.request_url;link.textContent=city.name;link.target="_blank";link.rel="noopener";byId("coordinates").append(link,document.createTextNode(" "));}
   drawSearchResults();
 }
 byId("source-summary").textContent=`数据来源与口径 · ${report.provider} · ${report.standard}`;

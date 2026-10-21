@@ -1,0 +1,1 @@
+<view class="chart-wrap" style="height:{{height}}px"><canvas type="2d" id="plot" class="plot" aria-label="{{spec.kind === 'monthly' ? '两城月度差距' : 'AQI 日值累计分布'}}"></canvas><text wx:if="unsupported" class="fallback">当前微信版本暂不支持图表，请升级微信。</text></view>

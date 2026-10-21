@@ -1,0 +1,3 @@
+"use strict";
+const {render}=require("./renderer");
+Component({properties:{spec:{type:Object,value:{},observer(){this.draw();}},height:{type:Number,value:280}},data:{unsupported:false},lifetimes:{ready(){this.ready=true;this.draw();},detached(){this.ready=false;}},methods:{draw(){if(!this.ready)return;wx.nextTick(()=>{this.createSelectorQuery().select("#plot").fields({node:true,size:true}).exec(result=>{const entry=result[0];if(!entry||!entry.node||!entry.width)return;const canvas=entry.node,ctx=canvas.getContext("2d"),info=wx.getWindowInfo?wx.getWindowInfo():wx.getSystemInfoSync(),ratio=info.pixelRatio||1;canvas.width=entry.width*ratio;canvas.height=entry.height*ratio;ctx.scale(ratio,ratio);render(ctx,entry.width,entry.height,this.properties.spec);});});}}});

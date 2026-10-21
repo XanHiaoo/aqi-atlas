@@ -1,0 +1,10 @@
+{
+  "appid": "",
+  "projectname": "AQI Atlas",
+  "description": "城市 AQI 年度概览 · 微信原生版",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "libVersion": "3.8.12",
+  "setting": {"es6": true, "enhance": true, "minified": true, "urlCheck": true},
+  "packOptions": {"ignore": [{"type": "folder", "value": "tests"}, {"type": "folder", "value": "scripts"}]}
+}

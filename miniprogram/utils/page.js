@@ -2,14 +2,14 @@
 const VM=require("./view-model"),M=require("./model");
 const modes=["calendar","realtime","monthly","statistics","compare"];
 module.exports=mode=>({
- data:{view:{mode,available:[],cards:[],live:[],weekdays:[]},navTop:24,navHeight:44},
+ data:{view:{mode,available:[],cards:[],live:[],weekdays:[],ecdf:{},monthlyGap:{},pairEcdf:{}},navTop:24,navHeight:44},
  onLoad(){this.store=getApp().store;this.ui={mode,threshold:50,metric:"median",notes:false,manager:false,visibleCities:3,sort:"default",focus:null,selectedDate:this.store.snapshot().report.end_date};let info=wx.getWindowInfo?wx.getWindowInfo():wx.getSystemInfoSync();const capsule=wx.getMenuButtonBoundingClientRect();this.setData({navTop:info.statusBarHeight||24,navHeight:Math.max(44,capsule.bottom-(info.statusBarHeight||24)+8)});this.unsubscribe=this.store.subscribe(()=>this.paint());this.paint();},
  onShow(){if(this.getTabBar&&this.getTabBar())this.getTabBar().setData({selected:modes.indexOf(mode)});if(this.store){this.paint();this.store.refresh();}clearInterval(this.timer);this.timer=setInterval(()=>this.store.refresh(),60000);},
  onHide(){clearInterval(this.timer);},onUnload(){this.destroyed=true;this.searchVersion=(this.searchVersion||0)+1;clearInterval(this.timer);clearTimeout(this.searchTimer);if(this.unsubscribe)this.unsubscribe();},
  onPullDownRefresh(){this.store.refresh(true).finally(()=>wx.stopPullDownRefresh());},
  onReachBottom(){if(mode==="calendar"){this.ui.visibleCities+=3;this.paint();}},
  onShareAppMessage(){return {title:"城市 AQI 年度概览",path:"/pages/"+mode+"/index"};},
- paint(){if(!this.ui||this.destroyed)return;const view=VM.build(this.store.snapshot(),this.ui);if(mode==="calendar"&&view.cards&&view.cards.length>3){const cards=view.cards;view.cards=[];this.setData({view});cards.forEach((card,i)=>this.setData({["view.cards["+i+"]"]:card}));}else this.setData({view});if(mode==="compare"&&view.aKey&&view.bKey)this.store.setPair([view.aKey,view.bKey]);},
+ paint(){if(!this.ui||this.destroyed)return;if(this.getTabBar&&this.getTabBar())this.getTabBar().setData({hidden:!!this.ui.manager});const view=VM.build(this.store.snapshot(),this.ui);if(mode==="calendar"&&view.cards&&view.cards.length>3){const cards=view.cards;view.cards=[];this.setData({view});cards.forEach((card,i)=>this.setData({["view.cards["+i+"]"]:card}));}else this.setData({view});if(mode==="compare"&&view.aKey&&view.bKey)this.store.setPair([view.aKey,view.bKey]);},
  noop(){},openManager(){this.ui.manager=true;this.paint();},closeManager(){this.ui.manager=false;this.ui.dragKey=null;this.paint();},
  toggleCity(event){const key=event.currentTarget.dataset.key,s=this.store.snapshot(),keys=s.selected.slice(),i=keys.indexOf(key);if(i<0)keys.push(key);else keys.splice(i,1);this.store.select(keys);this.store.refresh();},
  allCities(){this.store.select(this.store.snapshot().available.map(c=>c.key));this.store.refresh();},clearCities(){this.store.select([]);},

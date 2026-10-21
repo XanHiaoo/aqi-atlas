@@ -10,6 +10,11 @@ execFileSync(path.join(tools,'resources/app.asar.unpacked/node_modules/wcc-exec/
 const context={window:{},console};vm.createContext(context);vm.runInContext(fs.readFileSync(compiled,'utf8'),context);
 const render=context.$gwx('pages/calendar/index.wxml'),renderTabs=context.$gwx('custom-tab-bar/index.wxml');
 const parse=vm.runInContext('JSON.parse',context),native=value=>parse(JSON.stringify(value));
+const renderNativeChart=context.$gwx('components/chart/index.wxml');
+const chartTags=(data)=>{const tags=[];const walk=n=>{if(n&&typeof n==='object'){tags.push(n.tag);(n.children||[]).forEach(walk);}};walk(renderNativeChart(native(data)));return tags;};
+assert(!chartTags({spec:{kind:'ecdf'},height:280,unsupported:false,obscured:false}).includes('wx-text'));
+assert(chartTags({spec:{kind:'ecdf'},height:280,unsupported:true,obscured:false}).includes('wx-text'));
+assert(!chartTags({spec:{kind:'ecdf'},height:280,unsupported:false,obscured:true}).includes('wx-canvas'));
 const state=createStore({getStorageSync(){},setStorageSync(){}},{},()=>Date.parse('2026-10-21T09:00:00+08:00')).snapshot();
 const escape=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 let charts=[];

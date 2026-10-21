@@ -95,11 +95,34 @@ const report = JSON.parse(fs.readFileSync(path.join(root, 'dist/report.json'), '
         await page.locator('.mobile-section-jumps a[href="#monthly-section"]').click();
         await page.locator('[data-month-metric="good-share"]').click();
         assert.equal(await page.locator('#month-matrix tbody tr').count(), selected.length);
-        const matrixBounds = await page.locator('.month-matrix-scroll').boundingBox();
-        await page.locator('.month-matrix-scroll').evaluate(n => n.scrollLeft = 300);
-        const moved = await page.locator('#month-matrix tbody th').first().boundingBox();
-        assert(Math.abs(matrixBounds.x - moved.x) < 1, 'City labels remain pinned while swiping months');
-        await page.locator('.month-matrix-scroll').evaluate(n => n.scrollLeft = 0);
+        const monthly = page.locator('#mobile-month-matrix');
+        assert(await page.locator('.month-matrix-scroll').isHidden());
+        assert.equal(await monthly.locator('.mobile-month-group').count(), Math.ceil(selected.length / 3));
+        const groups = await monthly.locator('.mobile-month-group').all();
+        for (const group of groups) {
+          assert(await group.evaluate(n => n.scrollWidth <= n.clientWidth), 'All monthly city groups fit without horizontal scrolling');
+          assert.equal(await group.locator('tbody tr[data-month]').count(), monthBlocks.length);
+          assert(await group.locator('thead th').count() <= 4);
+        }
+        const snapshot = selector => page.locator(selector).evaluateAll(buttons => buttons.map(button => ({
+          key: button.dataset.city + '/' + button.dataset.month,
+          value: button.querySelector('strong').textContent,
+          count: button.querySelector('small').textContent,
+          fill: getComputedStyle(button).backgroundColor,
+          detail: button.title,
+        })).sort((a, b) => a.key.localeCompare(b.key)));
+        assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'), 'Mobile months preserve every statistic, valid-day count, color and detail');
+        const monthlyCell = monthly.locator('[data-mobile-month-cell]').nth(4);
+        await monthlyCell.click();
+        assert.equal(await monthly.locator('.mobile-month-detail-row').innerText(), await monthlyCell.getAttribute('title'));
+        await page.locator('[data-month-metric="median"]').click();
+        await page.locator('#month-common-days').uncheck();
+        assert.deepEqual(await snapshot('[data-mobile-month-cell]'), await snapshot('#month-matrix .month-matrix-cell'));
+        assert(await monthly.evaluate(n => n.scrollWidth <= n.clientWidth));
+        const monthlyNames = await monthly.locator('thead th:not(:first-child)').allTextContents();
+        assert.deepEqual(monthlyNames, await page.locator('#cities .city h2').allTextContents(), 'Monthly column order follows city selection');
+        await groups[0].evaluate(n => scrollTo(0, n.getBoundingClientRect().top + scrollY - document.querySelector('.site-header').offsetHeight - 10));
+        await page.screenshot({ path: path.join(output, `monthly-${width}-${height}.png`) });
         await page.locator('.mobile-section-jumps a[href="#ecdf-section"]').click();
         await page.locator('#ecdf-legend button').first().click();
         assert.equal(await page.locator('#ecdf-legend [aria-pressed="true"]').count(), 1);

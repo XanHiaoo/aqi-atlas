@@ -37,8 +37,38 @@
     node.append(overview);
     if(options.showDetail!==false){const detail=make("div","mobile-day-detail",options.describe(rows.get(state.date),state.date));detail.setAttribute("role","status");node.append(detail);}
   }
+  let matrixSource=null;
+  function paintMonthMatrix(){
+    if(!matrixSource||!media.matches)return;
+    let output=document.getElementById("mobile-month-matrix");
+    if(!output){output=make("div","mobile-month-matrix");output.id="mobile-month-matrix";matrixSource.closest(".month-matrix-scroll").after(output);}
+    output.replaceChildren();
+    const rows=[...matrixSource.tBodies[0].rows],labels=[...matrixSource.tHead.rows[0].cells].slice(1).map(cell=>cell.textContent);
+    for(let start=0;start<rows.length;start+=3){
+      const cities=rows.slice(start,start+3),group=make("section","mobile-month-group"),table=make("table","mobile-month-table"),head=make("thead",""),heading=make("tr",""),body=make("tbody","");group.setAttribute("aria-label",cities.map(row=>row.cells[0].textContent).join("、"));
+      const corner=make("th","","月份 / 城市");corner.scope="col";heading.append(corner);
+      for(const city of cities){const name=make("th","",city.cells[0].textContent);name.scope="col";heading.append(name);}head.append(heading);table.append(head,body);
+      labels.forEach((label,monthIndex)=>{
+        const row=make("tr",""),month=make("th","",label);month.scope="row";row.dataset.month=cities[0].cells[monthIndex+1].firstElementChild.dataset.month;row.append(month);
+        for(const city of cities){
+          const original=city.cells[monthIndex+1].firstElementChild,cell=make("td",""),button=original.cloneNode(true);button.dataset.mobileMonthCell="";
+          const show=()=>{
+            document.getElementById("month-matrix-detail").textContent=original.title;
+            output.querySelectorAll(".mobile-month-detail-row").forEach(node=>node.remove());output.querySelectorAll(".is-selected").forEach(node=>node.classList.remove("is-selected"));button.classList.add("is-selected");
+            const detail=make("tr","mobile-month-detail-row"),text=make("td","",original.title);text.colSpan=cities.length+1;text.setAttribute("role","status");detail.append(text);row.after(detail);
+          };
+          button.addEventListener("click",show);button.addEventListener("focus",()=>{if(button.matches(":focus-visible"))show();});
+          button.addEventListener("keydown",event=>{const move={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];if(move){event.preventDefault();table.querySelector(`[data-city-index="${Number(button.dataset.cityIndex)+move[0]}"][data-month-index="${monthIndex+move[1]}"]`)?.focus();}});
+          cell.append(button);row.append(cell);
+        }
+        body.append(row);
+      });group.append(table);output.append(group);
+    }
+  }
+  function monthMatrix(table){matrixSource=table;paintMonthMatrix();}
   function refresh(){
     for(const [node,entry] of connected())paint(node,entry);
+    paintMonthMatrix();
   }
   function toolbar(anchor,placement="before"){
     if(document.getElementById("mobile-calendar-tools")||!document.getElementById("report-data"))return;
@@ -72,6 +102,6 @@
   }
   media.addEventListener("change",()=>{setupPicker();refresh();});
   function visibility(visible){document.querySelectorAll(".mobile-calendar-tools,.mobile-section-jumps").forEach(node=>node.hidden=!visible);}
-  window.aqiMobile={calendar,toolbar,visibility};
+  window.aqiMobile={calendar,toolbar,visibility,monthMatrix};
   document.addEventListener("DOMContentLoaded",initialize);
 })();

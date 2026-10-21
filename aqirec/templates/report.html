@@ -270,6 +270,7 @@ function cityPanel(city, index) {
   for(const [label,value,unit] of entries){const stat=document.createElement("div");stat.className="stat";addText(stat,label,"stat-label");const number=document.createElement("div");number.className="stat-value";number.textContent=value;const u=document.createElement("small");u.textContent=unit;number.append(u);stat.append(number);numbers.append(stat);}
   head.append(numbers);section.append(head);
   const wrap=document.createElement("div");wrap.className="calendar-wrap";wrap.append(calendar(city));section.append(wrap);
+  section.append(window.aqiMobile.calendar({days:city.days,label:city.name,getValue:row=>row?.[metric],color:dayFill,format:fmt,describe:(row,date)=>`${city.name} · ${date.replaceAll("-",".")} · ${row?.[metric]==null?"数据缺失":`AQI ${fmt(row[metric])} · ${cat(row[metric]).name}`}`,onSelect:selectDate}));
   const foot=document.createElement("div");foot.className="city-foot";
   const dist=document.createElement("div");dist.className="distribution";dist.setAttribute("aria-label",stats.category_counts.map((n,i)=>`${report.categories[i].name} ${n}天`).join("；"));
   stats.category_counts.forEach((n,i)=>{if(!n)return;const seg=document.createElement("span");seg.style.background=report.categories[i].color;seg.style.width=(n/stats.valid_days*100)+"%";seg.title=report.categories[i].name+" "+n+"天";dist.append(seg);});foot.append(dist);section.append(foot);
@@ -434,7 +435,9 @@ function render(){
   byId("empty-state").querySelector("p").textContent=report.cities.length?"勾选上方城市即可查看日历，也可以点击“全选”恢复对比。":"搜索城市并添加，即可查看过去一年的美标 AQI。";
   byId("city-subtitle").textContent=(empty?"选择城市开始对比":cities.map(city=>city.name).join("、"))+" · 美标 AQI 日历热力图";
   document.title=`${report.start_date.slice(0,4)}–${report.end_date.slice(0,4)} · ${empty?"选择城市":cities.map(city=>city.name).join(" / ")} AQI 日历`;
+  window.aqiMobile.toolbar(byId("cities"));
   byId("cities").replaceChildren(...cities.map(cityPanel));drawLegend();drawMonthMatrix();drawECDF();selectDate(selectedDate);renderRealtime();
+  window.aqiMobile.visibility(!empty);
   window.aqiSite.setCalendarSelection(cities.map(city=>city.key));
   if(report.validation){const notice=byId("quality-note");notice.hidden=empty;notice.replaceChildren();
     const link=document.createElement("a");link.href=report.validation.audit_file;link.textContent="来源与覆盖范围 →";notice.append(link);}

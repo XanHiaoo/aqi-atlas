@@ -16,8 +16,8 @@ def render_page(template: str, inline: str, year_label: str, page: str) -> str:
     navigation = navigation.replace("__COMPARE_CURRENT__", 'aria-current="page"' if page == "compare" else "")
     return (template.replace("__AQIREC_DATA__", inline).replace("__AQIREC_YEAR__", year_label)
             .replace("__AQIREC_NAV__", navigation)
-            .replace("__AQIREC_SITE_STYLE__", (directory / "site.css").read_text(encoding="utf-8"))
-            .replace("__AQIREC_SITE_SCRIPT__", (directory / "site.js").read_text(encoding="utf-8")))
+            .replace("__AQIREC_SITE_STYLE__", "\n".join((directory / name).read_text(encoding="utf-8") for name in ("site.css", "mobile.css")))
+            .replace("__AQIREC_SITE_SCRIPT__", "\n".join((directory / name).read_text(encoding="utf-8") for name in ("site.js", "mobile.js"))))
 
 
 def write_text_atomic(file: Path, text: str):

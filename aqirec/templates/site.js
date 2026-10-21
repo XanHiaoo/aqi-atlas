@@ -19,6 +19,7 @@
   }
   document.querySelectorAll('[data-site-page="calendar"]').forEach(link=>link.href=calendarURL().href);
   document.querySelectorAll('[data-site-page="compare"]').forEach(link=>link.href=comparisonURL().href);
+  const pickerURL=calendarURL();pickerURL.hash="city-picker";document.querySelectorAll("[data-mobile-city-picker]").forEach(link=>link.href=pickerURL.href);
   let revision,selection,ready=Promise.resolve(),dirty=false,saving=false,busy=false,polling=false,selectionGeneration=0;
   function showStatus(payload){window.dispatchEvent(new CustomEvent("aqirec:status",{detail:payload}));}
   async function jsonRequest(url,body){

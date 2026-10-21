@@ -1,0 +1,6 @@
+{
+  "name": "aqi-atlas-browser-tests",
+  "private": true,
+  "scripts": { "test": "node mobile.spec.cjs" },
+  "devDependencies": { "playwright": "1.64.1" }
+}

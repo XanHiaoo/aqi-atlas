@@ -48,7 +48,7 @@
   <div class="hint" id="calendar-hint">每格代表一天，周一至周日自上而下排列，时间从去年向今年连续展开。悬停查看详情，点击或按 Enter 对比同一天；灰色为缺失，虚线框为今日暂定值。小屏可横向滚动日历。</div>
   <section class="month-matrix-panel" id="monthly-section" aria-labelledby="month-matrix-title">
     <div class="month-matrix-heading"><h2 id="month-matrix-title">城市 × 月份</h2><div class="month-matrix-metrics" role="group" aria-label="月度统计指标"><button type="button" data-month-metric="median" aria-pressed="true">月度 AQI 中位数</button><button type="button" data-month-metric="good-share" aria-pressed="false">良好日占比</button></div></div>
-    <div class="month-matrix-options"><label><input id="month-common-days" type="checkbox" checked>仅用共同有效日期</label><span id="month-matrix-coverage"></span></div>
+    <div class="month-matrix-options" hidden><label><input id="month-common-days" type="checkbox" checked>仅用共同有效日期</label><span id="month-matrix-coverage"></span></div>
     <div class="month-matrix-scroll" role="region" aria-label="城市与月份热力图，小屏可横向滚动" tabindex="0"><table class="month-matrix" id="month-matrix"><caption class="sr-only">城市按勾选顺序排列，月份按时间排列；每格显示月度统计值及有效日数。</caption><thead></thead><tbody></tbody></table></div>
     <div class="month-matrix-legend" id="month-matrix-legend"></div>
     <p class="month-matrix-detail" id="month-matrix-detail" role="status">悬停或点选单元格查看统计范围与有效日数。</p>

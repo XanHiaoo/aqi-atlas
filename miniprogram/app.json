@@ -1,0 +1,10 @@
+{
+  "pages": ["pages/calendar/index", "pages/realtime/index", "pages/monthly/index", "pages/statistics/index", "pages/compare/index"],
+  "window": {"navigationStyle": "custom", "navigationBarTitleText": "城市 AQI 年度概览", "backgroundColor": "#f4f7fb", "backgroundTextStyle": "dark", "enablePullDownRefresh": true},
+  "tabBar": {"custom": true, "color": "#6f8497", "selectedColor": "#1f659b", "backgroundColor": "#ffffff", "list": [
+    {"pagePath": "pages/calendar/index", "text": "日历"}, {"pagePath": "pages/realtime/index", "text": "实时"},
+    {"pagePath": "pages/monthly/index", "text": "月历"}, {"pagePath": "pages/statistics/index", "text": "统计"}, {"pagePath": "pages/compare/index", "text": "对比"}
+  ]},
+  "usingComponents": {"aqi-chart": "/components/chart/index"},
+  "style": "v2", "lazyCodeLoading": "requiredComponents", "sitemapLocation": "sitemap.json"
+}

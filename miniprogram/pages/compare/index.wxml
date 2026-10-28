@@ -1,0 +1,1 @@
+<import src="../../templates/screen.wxml"/><page-meta page-style="{{view.manager || view.popup ? 'overflow:hidden;' : ''}}"/><template is="screen" data="{{...view,navTop:navTop,navHeight:navHeight}}"/>

@@ -1,0 +1,21 @@
+name: Mini program tests
+on:
+  push:
+    branches: [main, feat/wechat-miniprogram]
+    paths: ['miniprogram/**', '.github/workflows/miniprogram.yml']
+  pull_request:
+    paths: ['miniprogram/**', '.github/workflows/miniprogram.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22'
+      - name: Test statistics, provider requests, storage and native page actions
+        run: node --test miniprogram/tests/core.test.cjs miniprogram/tests/pages.test.cjs
